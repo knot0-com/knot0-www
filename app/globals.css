@@ -50,7 +50,6 @@ body {
   background: var(--black);
   color: var(--white);
   font-family: var(--font-mono);
-  overflow: hidden; /* No scrolling */
 }
 
 /* Amber glow effect */
