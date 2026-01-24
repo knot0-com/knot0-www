@@ -3,7 +3,7 @@ import { DependencyGraph } from '@/components/discovery/dependency-graph'
 
 const contextItems = [
   'What depends on this service',
-  'Who owns it and who's oncall',
+  'Who owns it and who is oncall',
   'What changed recently',
   'What the blast radius is',
 ]
