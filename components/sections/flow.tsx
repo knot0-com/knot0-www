@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { MessageSquare, Search, Zap, Play, CheckCircle } from 'lucide-react'
 import { Container } from '@/components/ui'
 
@@ -36,6 +36,7 @@ const steps = [
 export function Flow() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <section className="py-24 bg-warm-white">
@@ -44,9 +45,9 @@ export function Flow() {
           {steps.map((step, index) => (
             <motion.div
               key={step.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: index * 0.15, duration: 0.5 }}
+              transition={prefersReducedMotion ? {} : { delay: index * 0.15, duration: 0.5 }}
               className="flex flex-col items-center text-center relative"
             >
               <div className="w-16 h-16 rounded-2xl bg-ink/5 flex items-center justify-center mb-4">
@@ -56,9 +57,9 @@ export function Flow() {
               <div className="text-sm text-ink/60 max-w-[140px]">{step.description}</div>
 
               {/* Connector arrow (desktop only) */}
-              {index < steps.length - 1 && (
+              {index < steps.length - 1 ? (
                 <div className="hidden lg:block absolute left-full top-8 w-8 h-0.5 bg-ink/20 -translate-x-2" />
-              )}
+              ) : null}
             </motion.div>
           ))}
         </div>

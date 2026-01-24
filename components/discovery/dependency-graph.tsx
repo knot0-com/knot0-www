@@ -1,19 +1,20 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { useRef } from 'react'
 
 export function DependencyGraph() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <div ref={ref} className="bg-ink rounded-xl p-6 font-mono text-sm">
       <div className="text-center mb-8">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.5 }}
+          initial={prefersReducedMotion ? {} : { opacity: 0, y: -10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={prefersReducedMotion ? {} : { duration: 0.5 }}
           className="inline-block px-4 py-2 bg-safety-orange/20 text-safety-orange rounded-lg"
         >
           payment-svc
@@ -24,9 +25,9 @@ export function DependencyGraph() {
         {['orders-db', 'redis', 'auth-svc'].map((node, i) => (
           <motion.div
             key={node}
-            initial={{ opacity: 0, y: -20 }}
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
+            transition={prefersReducedMotion ? {} : { delay: 0.2 + i * 0.1, duration: 0.5 }}
             className="px-3 py-1.5 bg-muted-cyan/20 text-muted-cyan rounded"
           >
             {node}
@@ -38,9 +39,9 @@ export function DependencyGraph() {
         {['postgres', 'users-db'].map((node, i) => (
           <motion.div
             key={node}
-            initial={{ opacity: 0, y: -20 }}
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.4 + i * 0.1, duration: 0.5 }}
+            transition={prefersReducedMotion ? {} : { delay: 0.4 + i * 0.1, duration: 0.5 }}
             className="px-3 py-1.5 bg-white/10 text-white/70 rounded"
           >
             {node}
@@ -49,9 +50,9 @@ export function DependencyGraph() {
       </div>
 
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={prefersReducedMotion ? {} : { opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
-        transition={{ delay: 0.6, duration: 0.5 }}
+        transition={prefersReducedMotion ? {} : { delay: 0.6, duration: 0.5 }}
         className="border-t border-white/10 pt-4 mt-4 grid grid-cols-2 gap-4 text-xs"
       >
         <div>
@@ -81,9 +82,9 @@ export function DependencyGraph() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={prefersReducedMotion ? {} : { opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
-        transition={{ delay: 0.8, duration: 0.5 }}
+        transition={prefersReducedMotion ? {} : { delay: 0.8, duration: 0.5 }}
         className="mt-4 pt-4 border-t border-white/10 text-center text-white/50 text-xs"
       >
         Sources: K8s · Git · CODEOWNERS · PagerDuty · Cloud APIs

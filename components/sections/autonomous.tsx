@@ -79,16 +79,16 @@ export function Autonomous() {
                       <div className={`mt-2 ${item.type === 'resolved' ? 'text-green-400' : 'text-safety-orange'}`}>
                         → Result: {item.result}
                       </div>
-                      {item.type === 'pending' && (
+                      {item.type === 'pending' ? (
                         <div className="mt-3 flex gap-2">
-                          <button className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium">
+                          <button className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-ink">
                             Approve
                           </button>
-                          <button className="px-3 py-1 bg-white/10 text-white rounded text-xs font-medium">
+                          <button className="px-3 py-1 bg-white/10 text-white rounded text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink">
                             Deny
                           </button>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>

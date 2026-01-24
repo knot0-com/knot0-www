@@ -60,7 +60,7 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-ink/70 hover:text-ink transition-colors py-2"
+                  className="text-ink/70 hover:text-ink transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-safety-orange rounded"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}

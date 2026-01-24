@@ -46,7 +46,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-white/60 hover:text-white transition-colors"
+                      className="text-sm text-white/60 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-safety-orange rounded"
                     >
                       {link.label}
                     </Link>
@@ -62,13 +62,13 @@ export function Footer() {
             © {new Date().getFullYear()} Knot0, Inc.
           </p>
           <div className="flex gap-6 text-sm text-white/40">
-            <Link href="/privacy" className="hover:text-white transition-colors">
+            <Link href="/privacy" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-safety-orange rounded">
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
+            <Link href="/terms" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-safety-orange rounded">
               Terms
             </Link>
-            <Link href="/security" className="hover:text-white transition-colors">
+            <Link href="/security" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-safety-orange rounded">
               Security
             </Link>
           </div>
