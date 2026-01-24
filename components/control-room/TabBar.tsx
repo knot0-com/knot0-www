@@ -1,4 +1,5 @@
 import { TabId } from './ControlRoom'
+import { Knot0Wordmark } from '../logo'
 
 interface TabBarProps {
   tabs: { id: TabId; label: string; key: string }[]
@@ -9,9 +10,9 @@ interface TabBarProps {
 export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
   return (
     <header className="flex items-center border-b border-black-border bg-black-light">
-      {/* Logo */}
-      <div className="px-6 py-4 border-r border-black-border">
-        <span className="text-amber font-bold text-lg tracking-wider">KNOT0</span>
+      {/* Animated Logo */}
+      <div className="px-6 py-3 border-r border-black-border">
+        <Knot0Wordmark size={28} interval={6000} />
       </div>
 
       {/* Tabs */}
