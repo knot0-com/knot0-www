@@ -1,16 +1,11 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import './globals.css'
+import './fonts.css'
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-body',
-  display: 'swap',
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
   display: 'swap',
 })
 
@@ -26,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={inter.variable}>
       <head>
         <meta name="theme-color" content="#fafaf9" />
       </head>

@@ -3,6 +3,7 @@
 :root {
   --background: #fafaf9;
   --foreground: #0f172a;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 @theme inline {
@@ -19,7 +20,12 @@
 
 html {
   color-scheme: light;
-  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -39,4 +45,10 @@ body {
 /* Utility classes */
 .text-balance {
   text-wrap: balance;
+}
+
+/* Selection styling */
+::selection {
+  background-color: rgba(249, 115, 22, 0.3);
+  color: #0f172a;
 }
