@@ -1,5 +1,5 @@
-import { ControlRoom } from '@/components/control-room'
+import { LandingPage } from '@/components/landing'
 
 export default function Home() {
-  return <ControlRoom />
+  return <LandingPage />
 }
