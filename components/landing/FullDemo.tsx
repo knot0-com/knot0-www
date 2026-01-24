@@ -397,7 +397,11 @@ export function FullDemo() {
     return clearTimeouts
   }, [phase, visibleDiscoveries, visiblePlanSteps, currentFileIndex, visibleCodeChars, scenario, hasInteracted, handleApprove, resetDemo, startDemo, nextScenario])
 
-  const currentFile = scenario.files[currentFileIndex]
+  const currentFile = scenario.files[currentFileIndex] || scenario.files[0]
+
+  if (!currentFile) {
+    return null
+  }
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] flex flex-col">
