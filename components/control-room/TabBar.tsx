@@ -12,7 +12,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
     <header className="flex items-center border-b border-black-border bg-black-light">
       {/* Animated Logo */}
       <div className="px-6 py-3 border-r border-black-border">
-        <Knot0Wordmark size={28} interval={6000} />
+        <Knot0Wordmark size={28} />
       </div>
 
       {/* Tabs */}

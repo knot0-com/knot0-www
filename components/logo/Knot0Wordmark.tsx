@@ -1,3 +1,4 @@
+
 'use client'
 
 import { motion, useScroll, useTransform } from 'framer-motion'
@@ -6,23 +7,6 @@ interface Knot0WordmarkProps {
   size?: number
   className?: string
 }
-
-// Clean trefoil knot - based on the minimal v3 reference
-const TREFOIL_PATH = `
-  M 50 12
-  C 72 12, 82 30, 82 50
-  C 82 65, 70 75, 55 72
-  C 48 71, 45 65, 50 58
-  C 55 51, 68 52, 75 62
-  C 85 78, 78 95, 62 102
-  C 50 107, 40 100, 45 88
-  C 48 80, 42 75, 35 78
-  C 22 82, 15 95, 25 102
-  C 38 110, 50 100, 50 88
-  C 50 78, 40 72, 28 68
-  C 15 62, 15 35, 30 22
-  C 40 15, 50 12, 50 12
-`.trim()
 
 export function Knot0Wordmark({ size = 32, className }: Knot0WordmarkProps) {
   const { scrollY } = useScroll()
@@ -58,11 +42,11 @@ export function Knot0Wordmark({ size = 32, className }: Knot0WordmarkProps) {
         KNOT0
       </motion.span>
 
-      {/* Trefoil symbol - visible when scrolled */}
+      {/* Trefoil symbol - 3 overlapping ellipses */}
       <motion.svg
         width={trefoilSize}
         height={trefoilSize}
-        viewBox="0 0 100 115"
+        viewBox="0 0 100 100"
         fill="none"
         className="absolute"
         style={{
@@ -70,19 +54,43 @@ export function Knot0Wordmark({ size = 32, className }: Knot0WordmarkProps) {
           scale: trefoilScale,
         }}
       >
-        <motion.path
-          d={TREFOIL_PATH}
+        {/* Top lobe - vertical ellipse */}
+        <ellipse
+          cx="50"
+          cy="30"
+          rx="18"
+          ry="25"
           stroke="#ffb000"
-          strokeWidth={4}
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          strokeWidth="3"
           fill="none"
+        />
+        {/* Bottom-left lobe - rotated ellipse */}
+        <ellipse
+          cx="35"
+          cy="68"
+          rx="18"
+          ry="25"
+          stroke="#ffb000"
+          strokeWidth="3"
+          fill="none"
+          transform="rotate(-60 35 68)"
+        />
+        {/* Bottom-right lobe - rotated ellipse */}
+        <ellipse
+          cx="65"
+          cy="68"
+          rx="18"
+          ry="25"
+          stroke="#ffb000"
+          strokeWidth="3"
+          fill="none"
+          transform="rotate(60 65 68)"
         />
         {/* Center dot */}
         <motion.circle
-          cx={50}
-          cy={62}
-          r={4}
+          cx="50"
+          cy="55"
+          r="4"
           fill="#4ecdc4"
           style={{ opacity: dotOpacity }}
         />
@@ -123,19 +131,94 @@ export function Knot0WordmarkStatic({
     <svg
       width={trefoilSize}
       height={trefoilSize}
-      viewBox="0 0 100 115"
+      viewBox="0 0 100 100"
       fill="none"
       className={className}
     >
-      <path
-        d={TREFOIL_PATH}
+      {/* Top lobe */}
+      <ellipse
+        cx="50"
+        cy="30"
+        rx="18"
+        ry="25"
         stroke="#ffb000"
-        strokeWidth={4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth="3"
         fill="none"
       />
-      <circle cx={50} cy={62} r={4} fill="#4ecdc4" />
+      {/* Bottom-left lobe */}
+      <ellipse
+        cx="35"
+        cy="68"
+        rx="18"
+        ry="25"
+        stroke="#ffb000"
+        strokeWidth="3"
+        fill="none"
+        transform="rotate(-60 35 68)"
+      />
+      {/* Bottom-right lobe */}
+      <ellipse
+        cx="65"
+        cy="68"
+        rx="18"
+        ry="25"
+        stroke="#ffb000"
+        strokeWidth="3"
+        fill="none"
+        transform="rotate(60 65 68)"
+      />
+      {/* Center dot */}
+      <circle cx="50" cy="55" r="4" fill="#4ecdc4" />
+    </svg>
+  )
+}
+
+// Standalone trefoil logo component
+export function TrefoilLogo({
+  size = 40,
+  className
+}: {
+  size?: number
+  className?: string
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      fill="none"
+      className={className}
+    >
+      <ellipse
+        cx="50"
+        cy="30"
+        rx="18"
+        ry="25"
+        stroke="#ffb000"
+        strokeWidth="3"
+        fill="none"
+      />
+      <ellipse
+        cx="35"
+        cy="68"
+        rx="18"
+        ry="25"
+        stroke="#ffb000"
+        strokeWidth="3"
+        fill="none"
+        transform="rotate(-60 35 68)"
+      />
+      <ellipse
+        cx="65"
+        cy="68"
+        rx="18"
+        ry="25"
+        stroke="#ffb000"
+        strokeWidth="3"
+        fill="none"
+        transform="rotate(60 65 68)"
+      />
+      <circle cx="50" cy="55" r="4" fill="#4ecdc4" />
     </svg>
   )
 }
