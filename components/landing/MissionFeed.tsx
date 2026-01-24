@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ConnectionAnimation } from './ConnectionAnimation'
 
 type IncidentState =
   | 'investigating'
@@ -327,14 +328,30 @@ export function MissionFeed() {
           </div>
 
           {/* Right: Code Output */}
-          <div className="p-4">
+          <div className="p-4 relative">
             <div className="text-white-muted text-xs mb-3 font-mono flex items-center gap-2">
               <span>CODE OUTPUT</span>
               {(state === 'writing_code' || state === 'awaiting_approval' || state === 'executing' || state === 'resolved') && (
                 <span className="text-amber">— {incident.code.filename}</span>
               )}
             </div>
-            <div className="bg-black-dark rounded border border-black-border p-3 font-mono text-xs min-h-[200px] overflow-hidden">
+            <div className="bg-black-dark rounded border border-black-border p-3 font-mono text-xs min-h-[200px] overflow-hidden relative">
+              {/* Connection animation overlay */}
+              <AnimatePresence>
+                {state === 'executing' && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-black/80 flex items-center justify-center z-10"
+                  >
+                    <ConnectionAnimation
+                      isActive={true}
+                      runnerCount={incident.approval.affected.length}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <pre className="text-white whitespace-pre-wrap">
                 {incident.code.content.slice(0, visibleCodeChars)}
                 {state === 'writing_code' && (
