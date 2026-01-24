@@ -1,13 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
 import './fonts.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-body',
-  display: 'swap',
-})
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Knot0 - AI that builds and runs automations. Governed.',
@@ -21,16 +14,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
-        <meta name="theme-color" content="#fafaf9" />
+        <meta name="theme-color" content="#0a0a0a" />
       </head>
-      <body className="antialiased">
-        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-ink focus:text-warm-white">
-          Skip to main content
-        </a>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }
