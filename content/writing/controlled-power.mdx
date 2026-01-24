@@ -1,0 +1,61 @@
+---
+title: "Controlled Power"
+subtitle: "Letting AI act safely in production"
+order: 1
+---
+
+## The Trust Problem
+
+Every time an AI agent proposes an action in production, someone has to decide: is this safe? The answer depends on context — what's being changed, what depends on it, and who's responsible.
+
+Most AI systems punt on this question. They generate suggestions and leave execution to humans. But that defeats the purpose. The whole point of AI automation is to reduce human toil.
+
+Knot0 takes a different approach: **earned autonomy**.
+
+## The Trust Ladder
+
+New automations start supervised. As they prove reliable, they earn progressively more autonomy:
+
+| Level | Status | What Happens |
+|-------|--------|--------------|
+| 🆕 | New | Every action requires explicit approval |
+| 👁 | Supervised | Human reviews each run but can fast-track |
+| ✅ | Trusted | Runs automatically within policy limits |
+| ⏸ | Suspended | Requires investigation before resuming |
+
+This isn't just workflow — it's how trust actually works. You don't hand someone the keys on day one. You watch, you verify, you gradually extend autonomy as confidence builds.
+
+## Policy Gates
+
+The trust ladder defines *when* something can act. Policy gates define *what* it can do.
+
+```yaml
+# Example policy
+allow:
+  - restart
+  - scale
+  - rollback
+
+deny:
+  - delete
+  - drop
+  - truncate
+
+require_approval:
+  - actions affecting > 3 services
+  - changes during incident windows
+```
+
+Every action passes through the policy gate. Some sail through. Some require a human decision. All are logged.
+
+## The Journal
+
+Every action, every decision, every approval lives in an immutable journal. When the audit comes — and it will come — the answer is always the same: look at the journal.
+
+This isn't about compliance theater. It's about understanding what happened and why. When an automation does something unexpected, you need to reconstruct the decision chain. The journal makes that possible.
+
+## Controlled Power
+
+The name says it all. AI can do powerful things — faster and more consistently than humans. But power without control is dangerous. Knot0's governance layer ensures that power is always channeled through policy, approval, and audit.
+
+Autonomy is earned, not assumed.

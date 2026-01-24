@@ -1,0 +1,92 @@
+---
+title: "From Runbook to Running Software"
+subtitle: "JIT synthesis and the death of maintenance"
+order: 3
+---
+
+## The Runbook Problem
+
+Every ops team has runbooks. Documents that explain what to do when things go wrong.
+
+"If the payment service is slow, check these metrics. If they look like X, run this command. If that doesn't work, page the database team."
+
+Runbooks capture tribal knowledge. They're the accumulated wisdom of every incident, every late-night debugging session, every "oh right, that weird thing."
+
+But runbooks have a fatal flaw: they require humans to execute them.
+
+## Humans Are Not Good Executors
+
+At 3am, with an incident raging and slack pinging, humans make mistakes:
+
+- They skip steps
+- They mistype commands
+- They forget context from previous runs
+- They get fatigued and miss obvious signals
+
+Runbooks are instructions for humans. But humans aren't reliable instruction-followers. Computers are.
+
+## What If Runbooks Could Run?
+
+This is the core insight behind JIT (just-in-time) synthesis. Instead of writing documents for humans to follow, describe what needs to happen and let an AI agent synthesize the automation.
+
+```
+BEFORE: Runbook (document)
+────────────────────────────
+1. SSH into prod-db-01
+2. Run: SELECT count(*) FROM orders WHERE status = 'stuck'
+3. If count > 100, run: UPDATE orders SET status = 'retry'...
+4. Verify in Datadog
+5. Post in #incidents
+
+Problems: Manual, error-prone, 3am fatigue, knowledge silos
+```
+
+```
+AFTER: Crystallized app
+───────────────────────────
+┌─────────────────────────────────────────────────────────────┐
+│  stuck-orders-fixer                            ● Running    │
+│                                                             │
+│  Trigger: Every 5 min OR manual                             │
+│  Logic: Query → Threshold check → Fix → Verify → Notify     │
+│  Runner: prod-db-runner                                     │
+│  Trust: ✅ Trusted (127 successful runs)                    │
+│                                                             │
+│  [View logs]  [Edit]  [Pause]  [Run now]                    │
+└─────────────────────────────────────────────────────────────┘
+
+Benefits: Automatic, consistent, audited, always-on
+```
+
+The runbook becomes running software.
+
+## From Fix to Forever
+
+Most automation starts as a one-time fix. "Let me just write a script to handle this." The script works, so you run it again. And again. Eventually someone asks: "Shouldn't this just run automatically?"
+
+Knot0 makes this progression effortless:
+
+1. **Describe the problem** — "Check if orders are stuck and fix them"
+2. **Agent synthesizes solution** — Code generated, tested, ready to run
+3. **Run once to verify** — See it work, approve the approach
+4. **Crystallize into app** — One click to make it permanent
+
+No ticket to file. No sprint to plan. No engineer to convince. The path from ad-hoc fix to production automation is minutes, not months.
+
+## The Death of Maintenance
+
+Traditional automation creates maintenance burden. Code rots. Dependencies break. The engineer who wrote it leaves, and nobody knows how it works.
+
+JIT synthesis inverts this. If something breaks, regenerate it. The specification is the source of truth, not the code. Code is cheap — synthesized on demand, discarded when obsolete.
+
+This isn't "AI writing code." It's a fundamental shift in how automation works. Instead of maintaining software, you maintain intent. The software is synthetic — generated when needed, regenerated when broken.
+
+## Turn Tribal Knowledge Into Running Software
+
+Every organization has tribal knowledge — the stuff that only Alice knows, the workarounds that only work on Tuesdays, the incantations that fix the weird bug.
+
+This knowledge lives in people's heads, in scattered docs, in years of muscle memory. When those people leave, the knowledge leaves with them.
+
+Knot0 crystallizes tribal knowledge into running software. Not documentation that gets stale. Not wikis that nobody reads. Actual, running, governed automation that captures what the experts know and executes it reliably.
+
+The experts can still override. They can still intervene. But the baseline is no longer "hope someone remembers" — it's "software does it automatically."

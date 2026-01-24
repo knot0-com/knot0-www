@@ -1,0 +1,69 @@
+---
+title: "Runners"
+subtitle: "The execution fabric for embodied AI"
+order: 2
+---
+
+## The Reach Problem
+
+APIs only reach systems designed for them. That new Kubernetes cluster? Easy. That Oracle database from 2007? Good luck.
+
+Enterprise infrastructure is a patchwork. Cloud and on-prem. Containers and VMs. Modern APIs and legacy systems that predate REST. Any automation platform that only works with the shiny stuff is useless for real enterprises.
+
+Runners solve this.
+
+## What Is a Runner?
+
+A runner is a lightweight agent that lives where your systems live. It connects back to Knot0, receives instructions, and executes them locally.
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   RUNNER     │     │   RUNNER     │     │   RUNNER     │
+│   (cloud)    │     │  (on-prem)   │     │   (edge)     │
+│              │     │              │     │              │
+│  AWS, GCP    │     │  VMs, K8s    │     │  IoT, retail │
+│  Azure       │     │  Databases   │     │  devices     │
+└──────────────┘     └──────────────┘     └──────────────┘
+        │                   │                   │
+        └───────────────────┴───────────────────┘
+                            │
+                      ┌─────┴─────┐
+                      │   KNOT0   │
+                      │  (control)│
+                      └───────────┘
+```
+
+Runners reach systems that APIs can't:
+
+- **Behind firewalls** — Runners initiate outbound connections, no inbound ports needed
+- **Air-gapped networks** — Runners can buffer and sync when connectivity allows
+- **Legacy systems** — Runners can shell into boxes, run scripts, talk proprietary protocols
+- **Edge devices** — Runners are lightweight enough for constrained environments
+
+## 60 Seconds to Deploy
+
+```bash
+curl -fsSL https://knot0.com/install | sh
+```
+
+That's it. The runner installs, connects, and starts reporting its capabilities. No manual configuration. No YAML files. No container orchestration.
+
+When a runner comes online, it tells Knot0 what it can do: what commands are available, what runtimes are installed, what systems it can reach. Knot0 uses this to route work to the right place.
+
+## Sandboxed Execution
+
+Just because a runner can reach a system doesn't mean it should do anything it wants. Every execution happens in a sandbox:
+
+- **Docker containers** with resource limits
+- **WASM modules** for ultra-lightweight isolation
+- **Cgroups and rlimits** for host execution
+
+The runner is the body. The sandbox is the safety envelope.
+
+## The Body for AI
+
+Most AI systems are brains without bodies. They can think, but they can't do. Runners give AI agents hands — the ability to reach into real systems and make changes.
+
+But hands without eyes are dangerous. That's where discovery comes in. Runners don't just execute — they observe. They map dependencies, track changes, and feed context back to the agent.
+
+Eyes and hands. That's what makes embodied AI.
