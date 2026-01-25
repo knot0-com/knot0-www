@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 interface Tool {
   slug: string
   name: string
+  oneLiner: string
   description: string
   status: 'stable' | 'beta' | 'experimental'
   github?: string
@@ -18,7 +19,8 @@ const tools: Tool[] = [
   {
     slug: 'taskgraph',
     name: 'Taskgraph',
-    description: 'DAG-based orchestration for coding agents (Codex, Claude Code, Gemini). Organize tasks as interconnected nodes with concurrent execution, SQLite state persistence, and git worktree support.',
+    oneLiner: 'DAG orchestration for coding agents',
+    description: 'Organize tasks as interconnected nodes with concurrent execution, SQLite state persistence, and git worktree support. Works with Codex, Claude Code, and Gemini.',
     status: 'beta',
     github: 'https://github.com/knot0-com/taskgraph',
     docs: '/writing/taskgraph',
@@ -63,43 +65,77 @@ export default function LabsPage() {
           </motion.p>
         </div>
 
-        {/* Tools Grid */}
+        {/* Tools Table */}
         {tools.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="border border-black-border rounded-lg overflow-hidden"
+          >
+            {/* Table Header */}
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-black-light border-b border-black-border text-xs font-mono text-white-muted">
+              <div className="col-span-2">NAME</div>
+              <div className="col-span-1">STATUS</div>
+              <div className="col-span-6">DESCRIPTION</div>
+              <div className="col-span-3">LINKS</div>
+            </div>
+
+            {/* Table Rows */}
             {tools.map((tool, index) => (
-              <motion.a
+              <motion.div
                 key={tool.slug}
-                href={tool.docs || tool.github || `/labs/${tool.slug}`}
-                target={!tool.docs && tool.github ? '_blank' : undefined}
-                rel={!tool.docs && tool.github ? 'noopener noreferrer' : undefined}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                className="group block border border-black-border rounded-lg p-6 hover:border-amber/50 transition-all bg-black-light hover:bg-black-light/80"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
+                className="group grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 py-4 border-b border-black-border last:border-b-0 hover:bg-black-light/50 transition-colors"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <h2 className="text-xl font-bold font-mono text-white group-hover:text-amber transition-colors">
+                {/* Name */}
+                <div className="md:col-span-2">
+                  <a
+                    href={tool.docs || tool.github || `/labs/${tool.slug}`}
+                    className="text-white font-mono font-medium hover:text-amber transition-colors"
+                  >
                     {tool.name}
-                  </h2>
-                  <span className={`text-xs font-mono px-2 py-1 rounded border ${statusColors[tool.status]}`}>
+                  </a>
+                </div>
+
+                {/* Status */}
+                <div className="md:col-span-1">
+                  <span className={`text-xs font-mono px-2 py-0.5 rounded border ${statusColors[tool.status]}`}>
                     {tool.status.toUpperCase()}
                   </span>
                 </div>
 
-                <p className="text-white-dim text-sm font-mono mb-6 line-clamp-3">
-                  {tool.description}
-                </p>
+                {/* Description */}
+                <div className="md:col-span-6">
+                  <p className="text-white-dim text-sm font-mono">
+                    <span className="text-white">{tool.oneLiner}</span>
+                    <span className="hidden lg:inline text-white-muted"> — {tool.description}</span>
+                  </p>
+                </div>
 
-                <div className="flex items-center gap-4 text-xs font-mono text-white-muted">
+                {/* Links */}
+                <div className="md:col-span-3 flex items-center gap-4 text-xs font-mono text-white-muted">
+                  {tool.docs && (
+                    <a
+                      href={tool.docs}
+                      className="flex items-center gap-1 hover:text-amber transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Docs
+                    </a>
+                  )}
                   {tool.github && (
                     <a
                       href={tool.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
                       className="flex items-center gap-1 hover:text-amber transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
                       </svg>
                       GitHub
@@ -110,19 +146,18 @@ export default function LabsPage() {
                       href={tool.npm}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
                       className="flex items-center gap-1 hover:text-amber transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M0 7.334v8h6.666v1.332H12v-1.332h12v-8H0zm6.666 6.664H5.334v-4H3.999v4H1.335V8.667h5.331v5.331zm4 0v1.336H8.001V8.667h5.334v5.332h-2.669v-.001zm12.001 0h-1.33v-4h-1.336v4h-1.335v-4h-1.33v4h-2.671V8.667h8.002v5.331z"/>
                       </svg>
                       npm
                     </a>
                   )}
                 </div>
-              </motion.a>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
           /* Empty State */
           <motion.div

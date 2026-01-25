@@ -45,3 +45,4 @@ docs/plans/
 
 # remotion
 remotion/
+.env*.local

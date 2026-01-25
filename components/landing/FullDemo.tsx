@@ -1056,6 +1056,36 @@ export function FullDemo() {
                   <div>
                     <div className="text-green-neon font-medium">{scenario.resultText}</div>
                     <div className="text-white-muted text-xs mt-1">{scenario.resultStats}</div>
+
+                    {/* Narrative bridge to next scenario */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="mt-4 p-3 border border-white-muted/20 rounded bg-white/5"
+                    >
+                      <div className="text-white-dim text-xs leading-relaxed">
+                        {scenarioIndex === 0 && (
+                          <>
+                            <span className="text-white font-medium">The fire is out.</span>{' '}
+                            But why did it happen? Understanding the root cause prevents the next incident.
+                          </>
+                        )}
+                        {scenarioIndex === 1 && (
+                          <>
+                            <span className="text-white font-medium">Root cause identified.</span>{' '}
+                            Now build the guardrails—alerts and dashboards—so it never happens again.
+                          </>
+                        )}
+                        {scenarioIndex === 2 && (
+                          <>
+                            <span className="text-white font-medium">Prevention deployed.</span>{' '}
+                            The incident loop is complete: fix → investigate → prevent. Ready to handle the next one.
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+
                     <div className="flex gap-2 mt-4">
                       <button
                         onClick={() => {
@@ -1076,7 +1106,9 @@ export function FullDemo() {
                         }}
                         className="px-3 py-1.5 border border-amber/50 text-amber font-mono text-xs rounded hover:bg-amber/10 transition-colors flex items-center gap-1"
                       >
-                        Next scenario →
+                        {scenarioIndex === 0 && '2. Investigate →'}
+                        {scenarioIndex === 1 && '3. Prevent →'}
+                        {scenarioIndex === 2 && '1. Fix →'}
                       </button>
                     </div>
                   </div>

@@ -26,27 +26,29 @@ export default function WritingPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
-            {posts.map((post) => (
+          <div className="border border-black-border rounded-lg overflow-hidden">
+            {posts.map((post, index) => (
               <Link
                 key={post.slug}
                 href={`/writing/${post.slug}`}
-                className="block group"
+                className="group flex items-start gap-4 px-5 py-4 border-b border-black-border last:border-b-0 hover:bg-black-light/50 transition-colors"
               >
-                <article className="border border-black-border rounded-lg p-6 hover:border-amber/50 transition-colors bg-black-light">
-                  <h2 className="text-xl font-semibold text-white group-hover:text-amber transition-colors font-mono">
+                <span className="text-white-muted font-mono text-sm pt-0.5 hidden sm:block w-6">
+                  {String(posts.length - index).padStart(2, '0')}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-white group-hover:text-amber transition-colors font-mono font-medium truncate">
                     {post.title}
                   </h2>
                   {post.subtitle && (
-                    <p className="mt-2 text-white-dim font-mono text-sm">
+                    <p className="text-white-muted font-mono text-sm mt-0.5 truncate">
                       {post.subtitle}
                     </p>
                   )}
-                  <div className="mt-4 flex items-center text-amber font-mono text-sm">
-                    <span className="group-hover:mr-2 transition-all">→</span>
-                    <span className="ml-2">Read</span>
-                  </div>
-                </article>
+                </div>
+                <span className="text-white-muted group-hover:text-amber transition-colors font-mono text-sm flex-shrink-0">
+                  →
+                </span>
               </Link>
             ))}
           </div>
