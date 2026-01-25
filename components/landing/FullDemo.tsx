@@ -39,7 +39,7 @@ function IncidentVisual({ phase, progress }: { phase: string; progress: number }
           {phase === 'resolved' ? '● STABLE' : phase === 'executing' ? '◐ PATCHING' : '● CRITICAL'}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {pods.map((pod, idx) => (
           <motion.div
             key={pod.name}
@@ -154,7 +154,7 @@ function MemoryDashboardVisual({ phase }: { phase: string }) {
         )}
       </div>
       <div className="border border-black-border rounded-lg p-4 bg-black-light">
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           <motion.div
             className="border border-green-neon/30 rounded p-3 bg-green-neon/5"
             animate={isLive ? { borderColor: ['rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.5)', 'rgba(34, 197, 94, 0.3)'] } : {}}
@@ -286,7 +286,7 @@ function PostMortemVisual() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-2 gap-3"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-3"
           >
             <motion.div
               className="border border-red-500/30 rounded p-3 bg-red-500/5"
@@ -816,7 +816,7 @@ export function FullDemo() {
     <div className="min-h-[calc(100vh-3.5rem)] flex flex-col">
       {/* Status Bar */}
       <div className="border-b border-black-border bg-black-light px-4 py-2">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div className="flex items-center gap-4">
             <span className="text-amber font-mono text-sm font-medium">CONTROL ROOM</span>
             <div className="flex items-center gap-2">
@@ -824,7 +824,7 @@ export function FullDemo() {
               <span className="text-white-dim text-xs font-mono">LIVE</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-xs font-mono">
+          <div className="flex items-center gap-1 text-xs font-mono overflow-x-auto max-w-full pb-1 sm:pb-0">
             {/* Scenario tabs */}
             {SCENARIOS.map((s, i) => (
               <button
@@ -848,9 +848,9 @@ export function FullDemo() {
       </div>
 
       {/* Main Demo Area */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex flex-col md:flex-row">
         {/* Left: Activity Feed */}
-        <div className="w-1/2 border-r border-black-border p-6 overflow-hidden">
+        <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-black-border p-4 md:p-6 overflow-hidden">
           <div className="text-white-muted text-xs font-mono mb-4">AGENT ACTIVITY</div>
 
           <div className="space-y-3 font-mono text-sm">
@@ -1083,9 +1083,9 @@ export function FullDemo() {
         </div>
 
         {/* Right: Code & Runners */}
-        <div className="w-1/2 flex flex-col">
+        <div className="w-full md:w-1/2 flex flex-col">
           {/* Output Panel - Visual or Code based on scenario and phase */}
-          <div className="flex-1 p-6 border-b border-black-border overflow-hidden">
+          <div className="flex-1 p-4 md:p-6 border-b border-black-border overflow-hidden">
             <div className="text-white-muted text-xs font-mono mb-4 flex items-center justify-between">
               <span>OUTPUT</span>
               {visibleCodeChars > 0 && phase === 'writing_code' && (
@@ -1135,9 +1135,9 @@ export function FullDemo() {
 
           {/* Runners Panel */}
           {scenario.runners.length > 0 && (
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="text-white-muted text-xs font-mono mb-4">RUNNERS</div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {runners.map((runner) => (
                   <motion.div
                     key={runner.id}
