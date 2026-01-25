@@ -1,10 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { MDXRemote } from 'next-mdx-remote/rsc'
-import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
-import { Container } from '@/components/ui'
+import { Header } from '@/components/landing/Header'
+import { TrefoilLogo } from '@/components/logo'
 import { getWritingPost, getAdjacentPosts, getAllWritingPosts } from '@/lib/mdx'
 import { mdxComponents } from '@/components/mdx'
 
@@ -36,45 +34,46 @@ export default async function WritingArticlePage({ params }: PageProps) {
   const { prev, next } = getAdjacentPosts(slug)
 
   return (
-    <>
+    <div className="min-h-screen bg-black text-white">
       <Header />
-      <main id="main" className="py-16">
-        <Container size="sm">
+
+      <main className="pt-20 pb-16 px-4">
+        <div className="max-w-2xl mx-auto">
           <Link
             href="/writing"
-            className="inline-flex items-center text-ink/60 hover:text-ink transition-colors mb-12"
+            className="inline-flex items-center text-white-muted hover:text-amber transition-colors mb-8 font-mono text-sm"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            All writing
+            ← All writing
           </Link>
 
           <article>
-            <header className="mb-12 text-center">
-              <h1 className="text-4xl sm:text-5xl font-bold text-ink text-balance">
+            <header className="mb-10">
+              <h1 className="text-3xl sm:text-4xl font-bold text-white font-mono">
                 {post.title}
               </h1>
-              <p className="mt-4 text-xl text-ink/70">
-                {post.subtitle}
-              </p>
+              {post.subtitle && (
+                <p className="mt-3 text-lg text-white-dim font-mono">
+                  {post.subtitle}
+                </p>
+              )}
             </header>
 
-            <div className="prose prose-lg max-w-none">
+            <div className="prose prose-invert prose-amber max-w-none font-mono text-white-dim prose-headings:text-white prose-headings:font-mono prose-a:text-amber prose-strong:text-white prose-code:text-cyan prose-code:bg-black-light prose-code:px-1 prose-code:rounded prose-pre:bg-black-light prose-pre:border prose-pre:border-black-border">
               <MDXRemote source={post.content} components={mdxComponents} />
             </div>
           </article>
 
           {(prev || next) && (
-            <nav className="mt-16 pt-8 border-t border-ink/10">
-              <div className="text-sm text-ink/60 mb-4">Continue reading</div>
+            <nav className="mt-12 pt-8 border-t border-black-border">
+              <div className="text-xs text-white-muted mb-4 font-mono">CONTINUE READING</div>
               <div className="flex justify-between gap-4">
                 {prev ? (
                   <Link
                     href={`/writing/${prev.slug}`}
                     className="flex-1 group"
                   >
-                    <div className="flex items-center text-ink/60 group-hover:text-ink transition-colors">
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      <span className="font-medium">{prev.title}</span>
+                    <div className="text-white-dim group-hover:text-amber transition-colors font-mono text-sm">
+                      ← {prev.title}
                     </div>
                   </Link>
                 ) : (
@@ -85,18 +84,29 @@ export default async function WritingArticlePage({ params }: PageProps) {
                     href={`/writing/${next.slug}`}
                     className="flex-1 text-right group"
                   >
-                    <div className="flex items-center justify-end text-ink/60 group-hover:text-ink transition-colors">
-                      <span className="font-medium">{next.title}</span>
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                    <div className="text-white-dim group-hover:text-amber transition-colors font-mono text-sm">
+                      {next.title} →
                     </div>
                   </Link>
                 )}
               </div>
             </nav>
           )}
-        </Container>
+        </div>
       </main>
-      <Footer />
-    </>
+
+      {/* Footer */}
+      <footer className="py-6 px-4 border-t border-black-border">
+        <div className="max-w-2xl mx-auto flex items-center justify-between text-sm font-mono text-white-muted">
+          <div className="flex items-center gap-2">
+            <TrefoilLogo size={20} />
+            <span>Knot0</span>
+          </div>
+          <Link href="/" className="hover:text-white transition-colors">
+            ← Back to home
+          </Link>
+        </div>
+      </footer>
+    </div>
   )
 }

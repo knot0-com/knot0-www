@@ -1,8 +1,6 @@
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
-import { Container } from '@/components/ui'
+import { Header } from '@/components/landing/Header'
+import { TrefoilLogo } from '@/components/logo'
 import { getAllWritingPosts } from '@/lib/mdx'
 
 export const metadata = {
@@ -14,44 +12,59 @@ export default function WritingPage() {
   const posts = getAllWritingPosts()
 
   return (
-    <>
+    <div className="min-h-screen bg-black text-white">
       <Header />
-      <main id="main" className="py-24">
-        <Container size="md">
-          <div className="text-center mb-16">
-            <h1 className="text-5xl font-bold text-ink">
+
+      <main className="pt-24 pb-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold text-white font-mono">
               Writing
             </h1>
-            <p className="mt-4 text-xl text-ink/70 max-w-2xl mx-auto">
+            <p className="mt-3 text-lg text-white-dim font-mono">
               Ideas behind Knot0 and the future of AI-powered operations.
             </p>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-4">
             {posts.map((post) => (
               <Link
                 key={post.slug}
                 href={`/writing/${post.slug}`}
                 className="block group"
               >
-                <article className="bg-warm-white border border-ink/10 rounded-xl p-8 hover:border-ink/20 transition-colors">
-                  <h2 className="text-2xl font-semibold text-ink group-hover:text-safety-orange transition-colors">
+                <article className="border border-black-border rounded-lg p-6 hover:border-amber/50 transition-colors bg-black-light">
+                  <h2 className="text-xl font-semibold text-white group-hover:text-amber transition-colors font-mono">
                     {post.title}
                   </h2>
-                  <p className="mt-2 text-lg text-ink/70">
-                    {post.subtitle}
-                  </p>
-                  <div className="mt-4 flex items-center text-safety-orange font-medium">
-                    Read
-                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  {post.subtitle && (
+                    <p className="mt-2 text-white-dim font-mono text-sm">
+                      {post.subtitle}
+                    </p>
+                  )}
+                  <div className="mt-4 flex items-center text-amber font-mono text-sm">
+                    <span className="group-hover:mr-2 transition-all">→</span>
+                    <span className="ml-2">Read</span>
                   </div>
                 </article>
               </Link>
             ))}
           </div>
-        </Container>
+        </div>
       </main>
-      <Footer />
-    </>
+
+      {/* Footer */}
+      <footer className="py-6 px-4 border-t border-black-border">
+        <div className="max-w-3xl mx-auto flex items-center justify-between text-sm font-mono text-white-muted">
+          <div className="flex items-center gap-2">
+            <TrefoilLogo size={20} />
+            <span>Knot0</span>
+          </div>
+          <Link href="/" className="hover:text-white transition-colors">
+            ← Back to home
+          </Link>
+        </div>
+      </footer>
+    </div>
   )
 }
