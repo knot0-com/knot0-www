@@ -212,10 +212,10 @@ export function TaskgraphAnimation() {
         </button>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-col md:flex-row">
         {/* Graph visualization */}
-        <div className="flex-1 p-4">
-          <svg viewBox="0 0 400 460" className="w-full h-80">
+        <div className="flex-1 p-4 min-h-[280px] md:min-h-0">
+          <svg viewBox="0 0 400 460" className="w-full h-64 md:h-80">
             {/* Draw edges */}
             {edges.map((edge, i) => {
               const fromNode = edge.from
@@ -315,9 +315,9 @@ export function TaskgraphAnimation() {
         </div>
 
         {/* Log panel */}
-        <div className="w-64 border-l border-black-border p-3 bg-black">
+        <div className="w-full md:w-64 border-t md:border-t-0 md:border-l border-black-border p-3 bg-black">
           <div className="text-xs font-mono text-white-muted mb-2">AGENT LOG</div>
-          <div className="space-y-1 h-64 overflow-y-auto scrollbar-thin">
+          <div className="space-y-1 h-40 md:h-64 overflow-y-auto scrollbar-thin">
             <AnimatePresence>
               {logs.length === 0 ? (
                 <div className="text-xs font-mono text-white-muted/50">
@@ -346,7 +346,7 @@ export function TaskgraphAnimation() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-4 px-4 py-3 border-t border-black-border text-xs font-mono flex-wrap">
+      <div className="flex items-center justify-center gap-x-4 gap-y-2 px-4 py-3 border-t border-black-border text-xs font-mono flex-wrap">
         {[
           { status: 'planning', label: 'Planning', color: 'bg-cyan' },
           { status: 'executing', label: 'Executing', color: 'bg-amber' },
