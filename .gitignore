@@ -42,3 +42,6 @@ next-env.d.ts
 
 # plans and internal docs
 docs/plans/
+
+# remotion
+remotion/
