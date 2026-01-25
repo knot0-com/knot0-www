@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MDXRemote } from 'next-mdx-remote/rsc'
+import remarkGfm from 'remark-gfm'
 import { Header } from '@/components/landing/Header'
 import { TrefoilLogo } from '@/components/logo'
 import { getWritingPost, getAdjacentPosts, getAllWritingPosts } from '@/lib/mdx'
@@ -59,7 +60,15 @@ export default async function WritingArticlePage({ params }: PageProps) {
             </header>
 
             <div className="prose prose-invert prose-amber max-w-none font-mono text-white-dim prose-headings:text-white prose-headings:font-mono prose-a:text-amber prose-strong:text-white prose-code:text-cyan prose-code:bg-black-light prose-code:px-1 prose-code:rounded prose-pre:bg-black-light prose-pre:border prose-pre:border-black-border">
-              <MDXRemote source={post.content} components={mdxComponents} />
+              <MDXRemote
+                source={post.content}
+                components={mdxComponents}
+                options={{
+                  mdxOptions: {
+                    remarkPlugins: [remarkGfm],
+                  },
+                }}
+              />
             </div>
           </article>
 
