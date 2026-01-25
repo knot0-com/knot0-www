@@ -1,4 +1,5 @@
 export { KnotLogo } from './KnotLogo'
 export { AnimatedKnotLogo } from './AnimatedKnotLogo'
 export { DrawingKnotLogo } from './DrawingKnotLogo'
-export { Knot0Wordmark, Knot0WordmarkStatic, TrefoilLogo } from './Knot0Wordmark'
+export { Knot0Wordmark, Knot0WordmarkStatic, TrefoilLogo, Trefoil3D, RopeTrefoil, GoldenRings } from './Knot0Wordmark'
+export { AnimatedTrefoil, SpinningTrefoil } from './AnimatedTrefoil'

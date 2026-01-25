@@ -1,0 +1,124 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    /* Draw animation for rope strands */
+    @keyframes drawUnder1 {
+      0%, 10% { stroke-dashoffset: 200; opacity: 0; }
+      15% { opacity: 1; }
+      45% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes drawUnder2 {
+      0%, 20% { stroke-dashoffset: 200; opacity: 0; }
+      25% { opacity: 1; }
+      55% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes drawUnder3 {
+      0%, 30% { stroke-dashoffset: 200; opacity: 0; }
+      35% { opacity: 1; }
+      65% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes drawOver1 {
+      0%, 15% { stroke-dashoffset: 200; opacity: 0; }
+      20% { opacity: 1; }
+      50% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes drawOver2 {
+      0%, 25% { stroke-dashoffset: 200; opacity: 0; }
+      30% { opacity: 1; }
+      60% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes drawOver3 {
+      0%, 35% { stroke-dashoffset: 200; opacity: 0; }
+      40% { opacity: 1; }
+      70% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 0; opacity: 1; }
+    }
+
+    .under1 { stroke-dasharray: 200; animation: drawUnder1 3s ease-out forwards; }
+    .under2 { stroke-dasharray: 200; animation: drawUnder2 3s ease-out forwards; }
+    .under3 { stroke-dasharray: 200; animation: drawUnder3 3s ease-out forwards; }
+    .over1 { stroke-dasharray: 200; animation: drawOver1 3s ease-out forwards; }
+    .over2 { stroke-dasharray: 200; animation: drawOver2 3s ease-out forwards; }
+    .over3 { stroke-dasharray: 200; animation: drawOver3 3s ease-out forwards; }
+
+    /* Subtle rope sway */
+    @keyframes sway {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(0.5deg); }
+    }
+    .rope-group {
+      transform-origin: 50px 55px;
+      animation: sway 4s ease-in-out infinite;
+    }
+  </style>
+
+  <defs>
+    <!-- Rope gradient for "over" strands - warm golden amber -->
+    <linearGradient id="ropeOverAnim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe066"/>
+      <stop offset="30%" stop-color="#ffcc00"/>
+      <stop offset="70%" stop-color="#e6a800"/>
+      <stop offset="100%" stop-color="#cc9200"/>
+    </linearGradient>
+
+    <!-- Rope gradient for "under" strands - deeper amber/bronze -->
+    <linearGradient id="ropeUnderAnim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d4a000"/>
+      <stop offset="30%" stop-color="#b38600"/>
+      <stop offset="70%" stop-color="#8c6900"/>
+      <stop offset="100%" stop-color="#705500"/>
+    </linearGradient>
+
+    <!-- Subtle shadow for depth on over strands -->
+    <filter id="ropeShadowAnim" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-color="#3d2800" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <g class="rope-group">
+    <!-- UNDER STRANDS -->
+    <path class="under1"
+      d="M 80.58 31.79 C 80.12 31.50 78.82 30.53 77.82 30.04 C 76.83 29.54 75.74 29.14 74.60 28.84 C 73.46 28.54 72.24 28.34 70.99 28.25 C 69.73 28.16 68.42 28.17 67.09 28.29 C 65.76 28.42 64.38 28.65 63.00 29.00 C 61.62 29.35 60.22 29.80 58.83 30.37 C 57.44 30.93 56.05 31.60 54.68 32.37 C 53.32 33.15 51.97 34.03 50.66 35.00 C 49.36 35.97 48.08 37.04 46.86 38.19 C 45.65 39.33 43.96 41.26 43.38 41.88"
+      fill="none" stroke="url(#ropeUnderAnim)" stroke-width="8" stroke-linecap="round"
+    />
+    <path class="under2"
+      d="M 56.62 41.88 C 56.04 41.26 54.35 39.33 53.14 38.19 C 51.92 37.04 50.64 35.97 49.34 35.00 C 48.03 34.03 46.68 33.15 45.32 32.37 C 43.95 31.60 42.56 30.93 41.17 30.37 C 39.78 29.80 38.38 29.35 37.00 29.00 C 35.62 28.65 34.24 28.42 32.91 28.29 C 31.58 28.17 30.27 28.16 29.01 28.25 C 27.76 28.34 26.54 28.54 25.40 28.84 C 24.26 29.14 23.17 29.54 22.18 30.04 C 21.18 30.53 19.88 31.50 19.42 31.79"
+      fill="none" stroke="url(#ropeUnderAnim)" stroke-width="8" stroke-linecap="round"
+    />
+    <path class="under3"
+      d="M 54.81 93.09 C 55.29 92.84 56.78 92.20 57.71 91.58 C 58.63 90.96 59.53 90.22 60.36 89.38 C 61.19 88.54 61.97 87.59 62.68 86.55 C 63.38 85.51 64.03 84.37 64.58 83.15 C 65.14 81.93 65.63 80.62 66.02 79.26 C 66.41 77.89 66.71 76.45 66.92 74.97 C 67.12 73.48 67.24 71.93 67.25 70.37 C 67.26 68.80 67.18 67.19 66.99 65.58 C 66.80 63.96 66.52 62.32 66.13 60.69 C 65.74 59.07 64.92 56.64 64.67 55.83"
+      fill="none" stroke="url(#ropeUnderAnim)" stroke-width="8" stroke-linecap="round"
+    />
+
+    <!-- OVER STRANDS -->
+    <path class="over1"
+      d="M 58.05 67.29 C 58.88 67.10 61.39 66.60 62.99 66.12 C 64.59 65.64 66.16 65.07 67.65 64.43 C 69.14 63.78 70.59 63.05 71.94 62.26 C 73.29 61.46 74.57 60.59 75.75 59.67 C 76.93 58.75 78.03 57.76 79.02 56.74 C 80.00 55.72 80.90 54.65 81.67 53.56 C 82.45 52.47 83.11 51.33 83.66 50.20 C 84.21 49.07 84.64 47.91 84.96 46.78 C 85.27 45.64 85.46 44.49 85.53 43.39 C 85.61 42.28 85.42 40.67 85.39 40.12"
+      fill="none" stroke="url(#ropeOverAnim)" stroke-width="8" stroke-linecap="round" filter="url(#ropeShadowAnim)"
+    />
+    <path class="over2"
+      d="M 35.33 55.83 C 35.08 56.64 34.26 59.07 33.87 60.69 C 33.48 62.32 33.20 63.96 33.01 65.58 C 32.82 67.19 32.74 68.80 32.75 70.37 C 32.76 71.93 32.88 73.48 33.08 74.97 C 33.29 76.45 33.59 77.89 33.98 79.26 C 34.37 80.62 34.86 81.93 35.42 83.15 C 35.97 84.37 36.62 85.51 37.32 86.55 C 38.03 87.59 38.81 88.54 39.64 89.38 C 40.47 90.22 41.37 90.96 42.29 91.58 C 43.22 92.20 44.71 92.84 45.19 93.09"
+      fill="none" stroke="url(#ropeOverAnim)" stroke-width="8" stroke-linecap="round" filter="url(#ropeShadowAnim)"
+    />
+    <path class="over3"
+      d="M 14.61 40.12 C 14.58 40.67 14.39 42.28 14.47 43.39 C 14.54 44.49 14.73 45.64 15.04 46.78 C 15.36 47.91 15.79 49.07 16.34 50.20 C 16.89 51.33 17.55 52.47 18.33 53.56 C 19.10 54.65 20.00 55.72 20.98 56.74 C 21.97 57.76 23.07 58.75 24.25 59.67 C 25.43 60.59 26.71 61.46 28.06 62.26 C 29.41 63.05 30.86 63.78 32.35 64.43 C 33.84 65.07 35.41 65.64 37.01 66.12 C 38.61 66.60 41.12 67.10 41.95 67.29"
+      fill="none" stroke="url(#ropeOverAnim)" stroke-width="8" stroke-linecap="round" filter="url(#ropeShadowAnim)"
+    />
+
+    <!-- Rope highlight lines -->
+    <g opacity="0.25" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none">
+      <path d="M 58.05 66 C 62 65 68 63 72 61 C 76 59 80 55 83 50 C 85 46 86 42 85.5 40">
+        <animate attributeName="opacity" values="0;0.25;0.25" dur="3s" fill="freeze"/>
+      </path>
+      <path d="M 35 55 C 34 59 33 65 33 70 C 33 76 34 82 37 87 C 40 90 43 92 45 93">
+        <animate attributeName="opacity" values="0;0.25;0.25" dur="3s" fill="freeze"/>
+      </path>
+      <path d="M 15 40 C 15 45 16 50 19 54 C 22 58 26 61 30 63 C 34 65 39 67 42 67">
+        <animate attributeName="opacity" values="0;0.25;0.25" dur="3s" fill="freeze"/>
+      </path>
+    </g>
+  </g>
+</svg>

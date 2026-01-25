@@ -1,9 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { Header } from './Header'
 import { FullDemo } from './FullDemo'
-import { TrefoilLogo } from '../logo'
 
 export function LandingPage() {
   return (
@@ -16,12 +14,9 @@ export function LandingPage() {
       </main>
 
       {/* Minimal Footer */}
-      <footer className="py-6 px-4 border-t border-black-border">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-mono text-white-muted">
-          <div className="flex items-center gap-2">
-            <TrefoilLogo size={20} />
-            <span>Knot0</span>
-          </div>
+      <footer className="py-6 px-6 md:px-12 lg:px-16 border-t border-black-border">
+        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-mono text-white-muted">
+          <span>Knot0</span>
           <div className="flex gap-6">
             <a href="/writing" className="hover:text-white transition-colors">Writing</a>
             <a href="https://github.com/knot0" className="hover:text-white transition-colors">GitHub</a>
