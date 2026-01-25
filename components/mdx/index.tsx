@@ -5,49 +5,55 @@ export const mdxComponents = {
   Callout,
   TaskgraphAnimation,
   h2: ({ children }: { children: React.ReactNode }) => (
-    <h2 className="text-2xl font-semibold text-ink mt-12 mb-4">
+    <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
       {children}
     </h2>
   ),
   h3: ({ children }: { children: React.ReactNode }) => (
-    <h3 className="text-xl font-semibold text-ink mt-8 mb-3">
+    <h3 className="text-xl font-semibold text-white mt-8 mb-3">
       {children}
     </h3>
   ),
   p: ({ children }: { children: React.ReactNode }) => (
-    <p className="text-ink/80 leading-relaxed mb-4">{children}</p>
+    <p className="text-white-dim leading-relaxed mb-4">{children}</p>
   ),
   ul: ({ children }: { children: React.ReactNode }) => (
-    <ul className="list-disc list-inside space-y-2 mb-4 text-ink/80">{children}</ul>
+    <ul className="list-disc list-inside space-y-2 mb-4 text-white-dim">{children}</ul>
   ),
   ol: ({ children }: { children: React.ReactNode }) => (
-    <ol className="list-decimal list-inside space-y-2 mb-4 text-ink/80">{children}</ol>
+    <ol className="list-decimal list-inside space-y-2 mb-4 text-white-dim">{children}</ol>
   ),
   li: ({ children }: { children: React.ReactNode }) => (
     <li className="leading-relaxed">{children}</li>
   ),
   strong: ({ children }: { children: React.ReactNode }) => (
-    <strong className="font-semibold text-ink">{children}</strong>
+    <strong className="font-semibold text-white">{children}</strong>
   ),
   code: ({ children }: { children: React.ReactNode }) => (
-    <code className="bg-ink/5 rounded px-1.5 py-0.5 font-mono text-sm">{children}</code>
+    <code className="bg-black-light text-cyan rounded px-1.5 py-0.5 font-mono text-sm">{children}</code>
   ),
   pre: ({ children }: { children: React.ReactNode }) => (
-    <pre className="bg-ink text-white rounded-lg p-4 overflow-x-auto my-6 font-mono text-sm">
+    <pre className="bg-black-light border border-black-border text-white-dim rounded-lg p-4 overflow-x-auto my-6 font-mono text-sm">
       {children}
     </pre>
   ),
   table: ({ children }: { children: React.ReactNode }) => (
-    <div className="overflow-x-auto my-6">
+    <div className="overflow-x-auto my-6 border border-black-border rounded-lg">
       <table className="w-full border-collapse">{children}</table>
     </div>
   ),
+  thead: ({ children }: { children: React.ReactNode }) => (
+    <thead className="bg-black-light">{children}</thead>
+  ),
   th: ({ children }: { children: React.ReactNode }) => (
-    <th className="border-b border-ink/10 px-4 py-2 text-left font-medium text-ink">
+    <th className="border-b border-black-border px-4 py-3 text-left font-medium text-white text-sm">
       {children}
     </th>
   ),
   td: ({ children }: { children: React.ReactNode }) => (
-    <td className="border-b border-ink/5 px-4 py-2 text-ink/80">{children}</td>
+    <td className="border-b border-black-border px-4 py-3 text-white-dim text-sm">{children}</td>
+  ),
+  tr: ({ children }: { children: React.ReactNode }) => (
+    <tr className="hover:bg-black-light/50 transition-colors">{children}</tr>
   ),
 }
