@@ -34,7 +34,7 @@ export function getAllWritingPosts(): WritingPost[] {
         content,
       }
     })
-    .sort((a, b) => a.order - b.order)
+    .sort((a, b) => b.order - a.order)
 
   return posts
 }
