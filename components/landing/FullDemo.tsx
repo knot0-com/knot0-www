@@ -813,7 +813,7 @@ export function FullDemo() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] flex flex-col">
+    <div className="min-h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3.5rem)] flex flex-col">
       {/* Status Bar */}
       <div className="border-b border-black-border bg-black-light px-4 py-2">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -848,12 +848,12 @@ export function FullDemo() {
       </div>
 
       {/* Main Demo Area */}
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 flex flex-col md:flex-row overflow-auto">
         {/* Left: Activity Feed */}
-        <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-black-border p-4 md:p-6 overflow-hidden">
+        <div className="w-full md:w-1/2 min-h-[300px] md:min-h-0 border-b md:border-b-0 md:border-r border-black-border p-4 md:p-6 overflow-auto">
           <div className="text-white-muted text-xs font-mono mb-4">AGENT ACTIVITY</div>
 
-          <div className="space-y-3 font-mono text-sm">
+          <div className="space-y-3 font-mono text-xs md:text-sm">
             {/* Idle */}
             <AnimatePresence>
               {phase === 'idle' && (
@@ -1083,7 +1083,7 @@ export function FullDemo() {
         </div>
 
         {/* Right: Code & Runners */}
-        <div className="w-full md:w-1/2 flex flex-col">
+        <div className="w-full md:w-1/2 min-h-[400px] md:min-h-0 flex flex-col">
           {/* Output Panel - Visual or Code based on scenario and phase */}
           <div className="flex-1 p-4 md:p-6 border-b border-black-border overflow-hidden">
             <div className="text-white-muted text-xs font-mono mb-4 flex items-center justify-between">
