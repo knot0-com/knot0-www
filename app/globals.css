@@ -18,8 +18,12 @@
 
   /* Text hierarchy */
   --white: #e8e8e8;
-  --white-dim: #888888;
-  --white-muted: #444444;
+  --white-dim: #a8a8a8;
+  --white-muted: #555555;
+
+  /* Terminal greens - high contrast */
+  --green-neon: #39ff14;
+  --green-terminal: #00ff88;
 
   /* Status */
   --status-online: var(--cyan);
@@ -39,6 +43,8 @@
   --color-white: var(--white);
   --color-white-dim: var(--white-dim);
   --color-white-muted: var(--white-muted);
+  --color-green-neon: var(--green-neon);
+  --color-green-terminal: var(--green-terminal);
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
 }
 

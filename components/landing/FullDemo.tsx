@@ -35,7 +35,7 @@ function IncidentVisual({ phase, progress }: { phase: string; progress: number }
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs text-white-muted mb-2">
         <span>CLUSTER: prod-k8s-01</span>
-        <span className={phase === 'resolved' ? 'text-green-500' : 'text-amber'}>
+        <span className={phase === 'resolved' ? 'text-green-neon' : 'text-amber'}>
           {phase === 'resolved' ? '● STABLE' : phase === 'executing' ? '◐ PATCHING' : '● CRITICAL'}
         </span>
       </div>
@@ -44,7 +44,7 @@ function IncidentVisual({ phase, progress }: { phase: string; progress: number }
           <motion.div
             key={pod.name}
             className={`border rounded-lg p-3 transition-all duration-500 ${
-              pod.status === 'healthy' ? 'border-green-500/50 bg-green-500/10' :
+              pod.status === 'healthy' ? 'border-green-neon/50 bg-green-neon/10' :
               pod.status === 'recovering' ? 'border-amber/50 bg-amber/10' :
               'border-red-500/50 bg-red-500/10'
             }`}
@@ -54,7 +54,7 @@ function IncidentVisual({ phase, progress }: { phase: string; progress: number }
           >
             <motion.div
               className={`w-3 h-3 rounded-full mb-2 ${
-                pod.status === 'healthy' ? 'bg-green-500' :
+                pod.status === 'healthy' ? 'bg-green-neon' :
                 pod.status === 'recovering' ? 'bg-amber' :
                 'bg-red-500'
               }`}
@@ -63,7 +63,7 @@ function IncidentVisual({ phase, progress }: { phase: string; progress: number }
             />
             <div className="text-xs font-mono truncate text-white">{pod.name}</div>
             <div className={`text-xs mt-1 ${
-              pod.status === 'healthy' ? 'text-green-500' :
+              pod.status === 'healthy' ? 'text-green-neon' :
               pod.status === 'recovering' ? 'text-amber' :
               'text-red-500'
             }`}>
@@ -85,7 +85,7 @@ function IncidentVisual({ phase, progress }: { phase: string; progress: number }
       <div className="border border-black-border rounded p-3 mt-4">
         <div className="flex items-center justify-between text-xs text-white-muted mb-2">
           <span>MEMORY USAGE</span>
-          <span className={phase === 'resolved' ? 'text-green-500' : 'text-red-500'}>
+          <span className={phase === 'resolved' ? 'text-green-neon' : 'text-red-500'}>
             {phase === 'resolved' ? '↓ normalized' : phase === 'executing' ? '↓ dropping' : '↑ critical'}
           </span>
         </div>
@@ -98,8 +98,8 @@ function IncidentVisual({ phase, progress }: { phase: string; progress: number }
             <motion.div
               key={i}
               className={`flex-1 rounded-t ${
-                phase === 'resolved' && i >= 6 ? 'bg-green-500' :
-                val > 80 ? 'bg-red-500' : val > 60 ? 'bg-amber' : 'bg-green-500'
+                phase === 'resolved' && i >= 6 ? 'bg-green-neon' :
+                val > 80 ? 'bg-red-500' : val > 60 ? 'bg-amber' : 'bg-green-neon'
               }`}
               initial={{ height: '20%' }}
               animate={{ height: `${val}%` }}
@@ -146,8 +146,8 @@ function MemoryDashboardVisual({ phase }: { phase: string }) {
       <div className="flex items-center justify-between text-xs">
         <span className="text-white-muted">payment-svc Memory Dashboard</span>
         {isLive && (
-          <span className="text-green-500 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+          <span className="text-green-neon flex items-center gap-1">
+            <span className="w-1.5 h-1.5 bg-green-neon rounded-full animate-pulse" />
             Live
             <span className="text-white-muted ml-2">Updated {tick}s ago</span>
           </span>
@@ -156,13 +156,13 @@ function MemoryDashboardVisual({ phase }: { phase: string }) {
       <div className="border border-black-border rounded-lg p-4 bg-black-light">
         <div className="grid grid-cols-3 gap-3 mb-4">
           <motion.div
-            className="border border-green-500/30 rounded p-3 bg-green-500/5"
+            className="border border-green-neon/30 rounded p-3 bg-green-neon/5"
             animate={isLive ? { borderColor: ['rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.5)', 'rgba(34, 197, 94, 0.3)'] } : {}}
             transition={{ duration: 2, repeat: Infinity }}
           >
             <div className="text-xs text-white-muted">Heap Used</div>
             <motion.div
-              className="text-2xl font-bold text-green-500"
+              className="text-2xl font-bold text-green-neon"
               key={heapUsed}
               initial={{ opacity: 0.7 }}
               animate={{ opacity: 1 }}
@@ -187,9 +187,9 @@ function MemoryDashboardVisual({ phase }: { phase: string }) {
             </motion.div>
             <div className="text-xs text-white-muted mt-1">{isLive ? 'LRU active' : ''}</div>
           </motion.div>
-          <div className="border border-green-500/30 rounded p-3 bg-green-500/5">
+          <div className="border border-green-neon/30 rounded p-3 bg-green-neon/5">
             <div className="text-xs text-white-muted">Alert Status</div>
-            <div className="text-lg font-bold text-green-500 mt-1 flex items-center gap-1">
+            <div className="text-lg font-bold text-green-neon mt-1 flex items-center gap-1">
               {isLive ? (
                 <>
                   <motion.span
@@ -214,7 +214,7 @@ function MemoryDashboardVisual({ phase }: { phase: string }) {
             {chartData.map((val, i) => (
               <motion.div
                 key={i}
-                className={`flex-1 rounded-t ${isLive ? 'bg-green-500' : 'bg-white-muted/30'}`}
+                className={`flex-1 rounded-t ${isLive ? 'bg-green-neon' : 'bg-white-muted/30'}`}
                 initial={{ height: '20%' }}
                 animate={{ height: `${isLive ? val : 20}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -238,7 +238,7 @@ function PostMortemVisual() {
     { time: '14:30', event: 'Traffic spike from marketing campaign', color: 'text-white-dim', bg: 'bg-white-muted' },
     { time: '14:32', event: 'payment-svc OOMKilled', color: 'text-red-500', bg: 'bg-red-500' },
     { time: '14:33', event: 'Knot0 deployed LRU cache fix', color: 'text-amber', bg: 'bg-amber' },
-    { time: '14:33', event: 'Service recovered', color: 'text-green-500', bg: 'bg-green-500' },
+    { time: '14:33', event: 'Service recovered', color: 'text-green-neon', bg: 'bg-green-neon' },
   ]
 
   useEffect(() => {
@@ -302,15 +302,15 @@ function PostMortemVisual() {
               <div className="text-xs text-white-muted mt-1">50k sessions = 2GB heap</div>
             </motion.div>
             <motion.div
-              className="border border-green-500/30 rounded p-3 bg-green-500/5"
+              className="border border-green-neon/30 rounded p-3 bg-green-neon/5"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <div className="text-xs text-green-500 mb-2">ACTION ITEMS</div>
+              <div className="text-xs text-green-neon mb-2">ACTION ITEMS</div>
               <div className="text-xs space-y-1">
                 <motion.div
-                  className="text-green-500 flex items-center gap-1"
+                  className="text-green-neon flex items-center gap-1"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
@@ -345,7 +345,7 @@ function highlightCode(code: string, filename: string): React.ReactNode[] {
     if (isPatch) {
       // Diff highlighting
       if (line.startsWith('+') && !line.startsWith('+++')) {
-        highlighted = <span className="text-green-400">{line}</span>
+        highlighted = <span className="text-green-neon">{line}</span>
       } else if (line.startsWith('-') && !line.startsWith('---')) {
         highlighted = <span className="text-red-400">{line}</span>
       } else if (line.startsWith('@@')) {
@@ -387,7 +387,7 @@ function highlightCode(code: string, filename: string): React.ReactNode[] {
         } else if (builtins.includes(word)) {
           tokens.push(<span key={key++} className="text-cyan">{word}</span>)
         } else if (word.match(/^['"`]/)) {
-          tokens.push(<span key={key++} className="text-green-400">{word}</span>)
+          tokens.push(<span key={key++} className="text-green-neon">{word}</span>)
         } else if (word.match(/^\d+$/)) {
           tokens.push(<span key={key++} className="text-amber">{word}</span>)
         } else if (word.match(/^[{}()[\]<>,:;=]$/)) {
@@ -820,7 +820,7 @@ export function FullDemo() {
           <div className="flex items-center gap-4">
             <span className="text-amber font-mono text-sm font-medium">CONTROL ROOM</span>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-green-neon animate-pulse" />
               <span className="text-white-dim text-xs font-mono">LIVE</span>
             </div>
           </div>
@@ -878,7 +878,7 @@ export function FullDemo() {
                 >
                   {/* Terminal prompt line */}
                   <div className="flex items-center gap-2 text-white-muted">
-                    <span className="text-green-500">❯</span>
+                    <span className="text-green-neon">❯</span>
                     <span className="text-cyan">knot0</span>
                     <span className="text-white-muted">~</span>
                   </div>
@@ -1048,9 +1048,9 @@ export function FullDemo() {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex items-start gap-3"
                 >
-                  <span className="text-green-500">✓</span>
+                  <span className="text-green-neon">✓</span>
                   <div>
-                    <div className="text-green-500 font-medium">{scenario.resultText}</div>
+                    <div className="text-green-neon font-medium">{scenario.resultText}</div>
                     <div className="text-white-muted text-xs mt-1">{scenario.resultStats}</div>
                     <div className="flex gap-2 mt-4">
                       <button
@@ -1096,7 +1096,7 @@ export function FullDemo() {
                         <span
                           key={f.name}
                           className={`w-1.5 h-1.5 rounded-full ${
-                            i < currentFileIndex ? 'bg-green-500' :
+                            i < currentFileIndex ? 'bg-green-neon' :
                             i === currentFileIndex ? 'bg-amber' : 'bg-white-muted'
                           }`}
                         />
@@ -1146,7 +1146,7 @@ export function FullDemo() {
                       ${runner.status === 'idle' ? 'border-black-border text-white-dim' : ''}
                       ${runner.status === 'receiving' ? 'border-amber bg-amber/5 text-amber' : ''}
                       ${runner.status === 'executing' ? 'border-cyan bg-cyan/5 text-cyan' : ''}
-                      ${runner.status === 'done' ? 'border-green-500 bg-green-500/5 text-green-500' : ''}
+                      ${runner.status === 'done' ? 'border-green-neon bg-green-neon/5 text-green-neon' : ''}
                     `}
                     animate={runner.status === 'executing' ? { opacity: [1, 0.7, 1] } : {}}
                     transition={{ repeat: Infinity, duration: 0.5 }}
@@ -1157,7 +1157,7 @@ export function FullDemo() {
                         runner.status === 'idle' ? 'bg-white-muted' :
                         runner.status === 'receiving' ? 'bg-amber' :
                         runner.status === 'executing' ? 'bg-cyan animate-pulse' :
-                        'bg-green-500'
+                        'bg-green-neon'
                       }`} />
                     </div>
                     <div className="text-white-muted">{runner.platform}</div>
