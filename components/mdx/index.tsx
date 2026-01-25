@@ -29,6 +29,16 @@ export const mdxComponents = {
   strong: ({ children }: { children: React.ReactNode }) => (
     <strong className="font-semibold text-white">{children}</strong>
   ),
+  a: ({ href, children }: { href?: string; children: React.ReactNode }) => (
+    <a
+      href={href}
+      className="text-amber hover:text-amber/80 underline underline-offset-2 decoration-amber/50 hover:decoration-amber transition-colors"
+      target={href?.startsWith('http') ? '_blank' : undefined}
+      rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+    >
+      {children}
+    </a>
+  ),
   code: ({ children }: { children: React.ReactNode }) => (
     <code className="bg-black-light text-cyan rounded px-1.5 py-0.5 font-mono text-sm">{children}</code>
   ),
