@@ -43,7 +43,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
       {/* Right side links */}
       <div className="flex items-center px-4 gap-4 text-sm text-white-dim">
         <a href="/docs" className="hover:text-white transition-colors">DOCS</a>
-        <a href="https://github.com/knot0" className="hover:text-white transition-colors">GITHUB</a>
+        <a href="https://github.com/knot0-com" className="hover:text-white transition-colors">GITHUB</a>
       </div>
     </header>
   )

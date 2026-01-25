@@ -20,7 +20,7 @@ const footerLinks = {
     { href: '/contact', label: 'Contact' },
   ],
   Connect: [
-    { href: 'https://github.com/knot0', label: 'GitHub' },
+    { href: 'https://github.com/knot0-com', label: 'GitHub' },
     { href: 'https://twitter.com/knot0', label: 'Twitter' },
     { href: 'https://discord.gg/knot0', label: 'Discord' },
   ],

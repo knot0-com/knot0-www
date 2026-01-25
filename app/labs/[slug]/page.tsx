@@ -196,7 +196,7 @@ export default async function ToolPage({
           <div className="flex gap-6">
             <a href="/" className="hover:text-white transition-colors">Home</a>
             <a href="/labs" className="hover:text-white transition-colors">Labs</a>
-            <a href="https://github.com/knot0" className="hover:text-white transition-colors">GitHub</a>
+            <a href="https://github.com/knot0-com" className="hover:text-white transition-colors">GitHub</a>
           </div>
         </div>
       </footer>

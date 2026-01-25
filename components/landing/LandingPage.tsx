@@ -27,7 +27,7 @@ export function LandingPage() {
           <span>Knot0</span>
           <div className="flex gap-6">
             <a href="/writing" className="hover:text-white transition-colors">Writing</a>
-            <a href="https://github.com/knot0" className="hover:text-white transition-colors">GitHub</a>
+            <a href="https://github.com/knot0-com" className="hover:text-white transition-colors">GitHub</a>
           </div>
         </div>
       </footer>

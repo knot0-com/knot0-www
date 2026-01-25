@@ -18,16 +18,10 @@ export function Header() {
             WRITING
           </a>
           <a
-            href="https://github.com/knot0"
+            href="https://github.com/knot0-com"
             className="text-white-dim hover:text-white transition-colors"
           >
             GITHUB
-          </a>
-          <a
-            href="/get-started"
-            className="px-4 py-1.5 bg-amber text-black font-medium rounded hover:bg-amber/90 transition-colors"
-          >
-            GET STARTED
           </a>
         </div>
       </div>
