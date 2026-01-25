@@ -817,11 +817,15 @@ export function FullDemo() {
       {/* Status Bar */}
       <div className="border-b border-black-border bg-black-light px-4 py-2">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-4">
-            <span className="text-amber font-mono text-sm font-medium">CONTROL ROOM</span>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-neon animate-pulse" />
-              <span className="text-white-dim text-xs font-mono">LIVE</span>
+          <div className="flex items-center gap-3 md:gap-4 text-xs font-mono">
+            <span className="text-white font-medium">VAULTPAY</span>
+            <span className="text-white-muted hidden sm:inline">/</span>
+            <span className="text-white-muted hidden sm:inline">prod-us-east-1</span>
+            <span className="text-white-muted hidden md:inline">/</span>
+            <span className="text-amber hidden md:inline">payment-cluster</span>
+            <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded bg-green-neon/10 border border-green-neon/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-neon animate-pulse" />
+              <span className="text-green-neon text-[10px]">CONNECTED</span>
             </div>
           </div>
           <div className="flex items-center gap-1 text-xs font-mono overflow-x-auto max-w-full pb-1 sm:pb-0">
