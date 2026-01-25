@@ -1,0 +1,91 @@
+---
+title: "Taskgraph"
+subtitle: "DAG-based orchestration for coding agents"
+order: 4
+---
+
+## The Context Problem
+
+AI coding agents are powerful. They can write code, fix bugs, and refactor entire systems. But they have a fatal flaw: they forget.
+
+Every conversation with an AI agent starts fresh. The agent doesn't remember what it did yesterday, what decisions were made, or what constraints exist. You end up re-explaining context over and over. Worse, when tasks are complex, the agent loses track mid-conversation.
+
+This is the context problem. And it's why most AI-assisted coding feels like babysitting.
+
+## Work as a Graph
+
+Taskgraph solves this by treating work as a directed acyclic graph (DAG). Instead of one long conversation, work is broken into nodes:
+
+```
+plan → task → task → verify → integrate → final_verify
+         ↘ task ↗
+```
+
+Each node is a discrete unit of work with:
+- **Clear inputs** — what context does this node need?
+- **Clear outputs** — what does this node produce?
+- **Dependencies** — what must complete first?
+
+The agent doesn't need to remember everything. It loads context from the graph on-demand. Fresh context, every time.
+
+<TaskgraphAnimation />
+
+## The Ops Model
+
+Most AI tools let agents directly manipulate state. This is dangerous. An agent might delete the wrong file, overwrite important code, or corrupt the project in ways that are hard to undo.
+
+Taskgraph uses an **ops model** instead. Agents don't directly change state. They emit operations:
+
+```
+emit: write_file
+path: src/utils.ts
+content: |
+  export function parse() { ... }
+```
+
+The host applies these operations. This separation means:
+- Every change is explicit and logged
+- Operations can be reviewed before applying
+- Rollback is always possible
+- Multiple agents can propose changes without conflicts
+
+## Concurrent Execution
+
+Complex tasks have independent subtasks. Why run them sequentially?
+
+Taskgraph supports concurrent execution with configurable worker counts. Independent nodes run in parallel. Dependencies are respected automatically.
+
+For code changes, this introduces a problem: merge conflicts. Taskgraph solves this with **git worktrees**. Each parallel task runs in its own worktree. Merges happen serially, with conflict detection and resolution.
+
+## SQLite State
+
+Everything is persisted in SQLite. The graph, the node states, the operations, the outputs. Nothing lives only in memory.
+
+This means:
+- Crash recovery is automatic
+- Progress survives restarts
+- History is queryable
+- State is inspectable
+
+You can always see exactly where you are in a complex task, what's completed, what's pending, and what failed.
+
+## Interactive Control
+
+Taskgraph includes a chat interface for real-time control:
+
+- Monitor progress across all nodes
+- Pause and resume execution
+- Inject manual interventions
+- Query state and history
+
+The graph runs autonomously, but you're never locked out.
+
+## Why This Matters
+
+AI coding agents are getting better fast. But their value is limited by context management. Without structure, they're powerful but forgetful assistants.
+
+Taskgraph provides that structure. It turns AI agents into reliable workers that can handle complex, multi-step tasks without losing track. The agent stays fresh. The work stays organized. The human stays in control.
+
+---
+
+Taskgraph is open source: [github.com/knot0-com/taskgraph](https://github.com/knot0-com/taskgraph)

@@ -10,6 +10,14 @@ export function LandingPage() {
 
       {/* Full-screen Demo Experience */}
       <main className="pt-14">
+        <div className="px-6 md:px-12 lg:px-16 py-8">
+          <h1 className="font-mono text-2xl md:text-3xl text-white font-bold mb-2">
+            Tie agent to action.
+          </h1>
+          <p className="font-mono text-white-dim text-sm md:text-base max-w-2xl">
+            Discovers context. Writes code. Deploys safely—with approvals when it matters.
+          </p>
+        </div>
         <FullDemo />
       </main>
 
