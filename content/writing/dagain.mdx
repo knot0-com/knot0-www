@@ -94,6 +94,35 @@ Each node has a retry policy. When retries are exhausted, Dagain doesn't just gi
 
 When human judgment is required, nodes enter a `checkpoint` state. Execution pauses, you make the call, and the decision is recorded permanently. No re-asking. No context loss. The graph remembers.
 
+## Runner Pools: Graceful Degradation
+
+Not all tasks need the same firepower. A simple rename? Codex handles it. A gnarly refactor with subtle type constraints? Maybe Claude should take over.
+
+Dagain supports **runner pools**—configure a role with multiple runners, and Dagain promotes through them on failure:
+
+```json
+{
+  "roles": {
+    "executor": ["codexMedium", "codex", "claude"]
+  },
+  "supervisor": {
+    "runnerPool": {
+      "mode": "promotion",
+      "promoteOn": ["timeout", "missing_result", "spawn_error"],
+      "promoteAfterAttempts": 2
+    }
+  }
+}
+```
+
+The logic is simple:
+- Start with the first runner (cheapest, fastest)
+- If it times out or crashes, promote immediately to the next
+- If it returns a valid result but the task still fails, retry twice before promoting
+- Once you hit the last runner, stick with it
+
+This gives you cost efficiency by default, with automatic escalation when things get hard. Most tasks complete on the cheap runner. The expensive one only spins up when needed.
+
 ## Parallelism That Doesn't Break Things
 
 Dagain supports concurrent execution with `--workers N`. Independent nodes run in parallel. Dependencies are respected automatically.
