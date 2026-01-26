@@ -14,6 +14,8 @@ Not because they're stupid. Because they forget. Every turn of conversation dilu
 
 This isn't a model limitation. It's an architecture problem. We've been running agents in chat threads when we should be running them on work graphs.
 
+Dagain (DAG + "again") is our answer: a directed acyclic graph that knows how to retry.
+
 ## Work as a DAG
 
 Dagain models work as a directed acyclic graph. Each node is a discrete unit:
@@ -86,7 +88,7 @@ No Redis. No external services. One file, version-controllable, inspectable, por
 
 ## Failure is a First-Class Citizen
 
-Real work fails. Dagain expects this.
+Real work fails. Dagain expects this—it's in the name.
 
 Each node has a retry policy. When retries are exhausted, Dagain doesn't just give up—it *escalates*. The failure bubbles up to the nearest planning node, which triggers a replan. If that fails, it escalates further. All the way to the root if necessary.
 
