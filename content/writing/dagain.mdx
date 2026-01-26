@@ -4,125 +4,135 @@ subtitle: "DAG-based orchestration for coding agents"
 order: 4
 ---
 
-## The Context Problem
+## The Forgetting Problem
 
-AI coding agents are powerful. They can write code, fix bugs, and refactor systems. But they have a fatal flaw: they lose context.
+AI coding agents can write entire features. They can debug gnarly race conditions. They can refactor legacy code that nobody wants to touch.
 
-Most agent workflows treat a task as one long chat. That works for small changes. It breaks down on real work:
+But give them a task that takes more than twenty minutes, and they fall apart.
 
-- The “why” gets buried under 100 turns of “how”
-- Subtasks can’t be safely parallelized
-- Verification is inconsistent (tests/logs live outside the thread)
-- Failures are hard to recover from (the state is in the conversation, not in a system)
+Not because they're stupid. Because they forget. Every turn of conversation dilutes the original goal. By turn fifty, the agent is confidently solving the wrong problem. By turn one hundred, you're babysitting.
 
-This is the context problem. It’s why AI-assisted coding often feels like babysitting: you’re not managing the work, you’re managing the agent’s attention.
+This isn't a model limitation. It's an architecture problem. We've been running agents in chat threads when we should be running them on work graphs.
 
-## Work as a Graph
+## Work as a DAG
 
-Dagain treats work as a directed acyclic graph (DAG). Instead of one long conversation, it breaks work into nodes:
+Dagain models work as a directed acyclic graph. Each node is a discrete unit:
 
 ```
-plan → task → task → verify → integrate → final_verify
-         ↘ task ↗
+plan → implement → implement → verify → integrate
+            ↘ implement ↗
 ```
 
-Each node is a small, runnable unit with:
-- **Inputs** — what context does this node need?
-- **Outputs** — what artifacts does it produce?
-- **Dependencies** — what must complete first?
+Nodes have three properties:
+- **Inputs** — the context this node needs
+- **Outputs** — what it produces
+- **Dependencies** — what must finish first
 
-The key idea is that the agent doesn’t need to remember everything. Dagain loads context from the graph/DB on-demand. Fresh context, every time.
+The graph is the source of truth. Not the conversation. Not the agent's memory. The graph.
 
 <DagainAnimation />
 
-## Packets: Fresh Context Per Node
+## Fresh Context, Every Time
 
-When Dagain runs a node, it builds a packet: a small file containing the node’s title/type, inputs, and any relevant durable context (goal + prior summaries + referenced artifacts). Then it launches a runner with that packet.
+When Dagain executes a node, it builds a *packet*: a small file containing only what that node needs to run. The goal. The relevant prior decisions. The specific artifacts it depends on.
 
-This is deliberately the opposite of “keep everything in the prompt”. Nodes run as fresh processes, with only the context they need.
+Then it launches a fresh process with that packet.
 
-Under the hood, runners also get DB pointers via environment variables (for example `$CHOREO_DB`, `$CHOREO_NODE_ID`, `$CHOREO_RUN_ID`). That lets the agent persist or retrieve context without bloating the prompt.
+This is the opposite of "keep cramming context into the prompt." Each node starts clean, with surgical context. No accumulated confusion. No goal drift.
 
-## The Supervisor Loop (and the Ops Contract)
+The agent can still access shared state—Dagain exposes database pointers via environment variables (`$DAGAIN_DB`, `$DAGAIN_NODE_ID`). But it pulls what it needs. It doesn't carry everything forever.
 
-In Dagain, agents don’t mutate the work graph directly. The supervisor owns the graph and the database. Runners return structured results, and the supervisor applies them.
+## Agents Propose, Supervisors Apply
 
-The contract is simple:
-- Runner reads the packet file
-- Runner does work (code, analysis, verification)
-- Runner prints exactly one JSON object inside `<result>...</result>`
-- Supervisor parses it and applies the “next” operations (update status, add nodes, add deps, request a checkpoint)
+Here's where it gets interesting.
 
-Example result (simplified):
+Runners don't modify the graph directly. They can't mark themselves done. They can't spawn new tasks. They can only *propose* changes by returning structured results:
 
-```
-<result>{
+```json
+{
   "status": "success",
   "next": {
-    "setStatus": [{ "id": "task-001", "status": "done" }],
-    "addNodes": [{ "id": "task-002", "type": "task", "title": "Add tests", "status": "open" }]
+    "setStatus": [{"id": "task-001", "status": "done"}],
+    "addNodes": [{"id": "task-002", "title": "Add tests"}]
   }
-}</result>
+}
 ```
 
-This separation matters: orchestration state is explicit, logged, and recoverable. Even if a runner goes off the rails, the graph is still the source of truth.
+The supervisor—a separate process—parses these proposals and applies them to the graph. This separation is load-bearing:
 
-## Durable Memory (SQLite)
+- The graph is always consistent
+- Every state change is logged
+- A misbehaving agent can't corrupt the work
+- Recovery is trivial: just replay from the last good state
 
-Everything Dagain knows is persisted in `.dagain/state.sqlite`:
-- `nodes` / `deps` — the work graph and statuses
-- `kv_latest` / `kv_history` — durable context and artifacts (with history)
-- `mailbox` — a control queue for pause/resume/workers/replan/cancel
+## SQLite is the Memory
 
-This buys you a few practical properties:
-- Crash recovery is automatic (re-run and it continues)
-- Progress survives restarts
-- State is queryable and inspectable
-- Context can be loaded selectively, not carried forever
+All state lives in `.dagain/state.sqlite`:
 
-## Failure, Escalation, and Replanning
+| Table | Purpose |
+|-------|---------|
+| `nodes` | The work graph |
+| `deps` | Node dependencies |
+| `kv_latest` | Current artifacts and context |
+| `kv_history` | Full history of all artifacts |
+| `mailbox` | Control messages (pause, resume, cancel) |
 
-Real work fails. Dagain is built around that.
+This means:
+- Crash? Restart and continue from where you stopped.
+- Want to inspect state? `sqlite3 .dagain/state.sqlite "SELECT * FROM nodes"`
+- Need to debug a failure? The full history is right there.
 
-Each node has a retry policy. If a leaf node fails repeatedly, Dagain escalates by promoting the failure to the nearest plan scope, forcing replanning before it launches more work. That escalation can recurse all the way to the root plan if needed.
+No Redis. No external services. One file, version-controllable, inspectable, portable.
 
-When a human decision is required, a node can enter a `checkpoint`/`needs_human` state. You answer once, the graph resumes, and the decision is recorded durably.
+## Failure is a First-Class Citizen
 
-## Parallelism Without Foot-Guns
+Real work fails. Dagain expects this.
 
-Dagain supports concurrent execution (`--workers N`). Nodes run in parallel when they don’t conflict and when dependencies allow.
+Each node has a retry policy. When retries are exhausted, Dagain doesn't just give up—it *escalates*. The failure bubbles up to the nearest planning node, which triggers a replan. If that fails, it escalates further. All the way to the root if necessary.
 
-For conflict-prone code edits, Dagain can isolate executors in git worktrees. Each parallel task edits in its own working directory; merges happen serially. You get throughput without turning your repo into a conflict factory.
+When human judgment is required, nodes enter a `checkpoint` state. Execution pauses, you make the call, and the decision is recorded permanently. No re-asking. No context loss. The graph remembers.
 
-## Human-in-the-Loop Control
+## Parallelism That Doesn't Break Things
 
-Dagain includes a chat interface that talks to the same durable state. You can:
+Dagain supports concurrent execution with `--workers N`. Independent nodes run in parallel. Dependencies are respected automatically.
 
-- Monitor progress across all nodes
-- Pause and resume execution
-- Inject manual interventions
-- Query state and history
+For code changes, parallelism usually means merge hell. Dagain solves this with git worktrees: each worker operates in an isolated directory. Merges happen one at a time, with automatic conflict detection. You get speed without chaos.
 
-The graph can run autonomously, but you’re never locked out.
+## You're Always in Control
 
-## Try it
+Dagain includes a chat interface connected to the same database:
 
 ```bash
-# in a repo you want to work on
-npx dagain init --goal "Add a CLI flag --foo and tests" --no-refine
+npx dagain chat
+```
+
+From there you can:
+- See what's running, what's blocked, what failed
+- Pause execution mid-flight
+- Inject decisions or override plans
+- Query the full history
+
+The graph runs autonomously. But you're never locked out.
+
+## Try It
+
+```bash
+npx dagain init --goal "Add authentication to the API"
 npx dagain run --live
 
-# in another terminal
+# In another terminal
 npx dagain status
 npx dagain chat
 ```
 
-## Why This Matters
+## Why This Exists
 
-AI coding agents are improving fast. But without structure, they’re still easy to derail: too much context, too little state, and no reliable recovery path.
+The bottleneck on AI coding isn't intelligence. It's architecture.
 
-Dagain is the missing substrate: a durable work graph, a small-packet execution model, and explicit control points. The agent stays fresh. The work stays organized. The human stays in control.
+Long-running agents need durable state. Complex tasks need decomposition. Failures need structured recovery. Humans need visibility and control.
+
+Dagain is the missing layer: a work graph that persists, a packet model that keeps context fresh, and an execution model that treats failure as normal. The agent does the work. The graph keeps it honest.
 
 ---
 
-Dagain is open source: [github.com/knot0-com/dagain](https://github.com/knot0-com/dagain)
+Open source: [github.com/knot0-com/dagain](https://github.com/knot0-com/dagain)
