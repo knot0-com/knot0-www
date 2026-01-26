@@ -17,13 +17,13 @@ interface Tool {
 
 const tools: Tool[] = [
   {
-    slug: 'taskgraph',
-    name: 'Taskgraph',
+    slug: 'dagain',
+    name: 'Dagain',
     oneLiner: 'DAG orchestration for coding agents',
     description: 'Organize tasks as interconnected nodes with concurrent execution, SQLite state persistence, and git worktree support. Works with Codex, Claude Code, and Gemini.',
     status: 'beta',
-    github: 'https://github.com/knot0-com/taskgraph',
-    docs: '/writing/taskgraph',
+    github: 'https://github.com/knot0-com/dagain',
+    docs: '/writing/dagain',
   },
 ]
 

@@ -1,9 +1,9 @@
 import { Callout } from './callout'
-import { TaskgraphAnimation } from '../writing/TaskgraphAnimation'
+import { DagainAnimation } from '../writing/DagainAnimation'
 
 export const mdxComponents = {
   Callout,
-  TaskgraphAnimation,
+  DagainAnimation,
   h2: ({ children }: { children: React.ReactNode }) => (
     <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
       {children}

@@ -41,7 +41,7 @@ const statusColors: Record<NodeStatus, { bg: string; border: string; text: strin
   cancelled: { bg: 'bg-white-muted/10', border: 'border-white-muted/30', text: 'text-white-muted/50' },
 }
 
-export function TaskgraphAnimation() {
+export function DagainAnimation() {
   const [nodes, setNodes] = useState<DAGNode[]>(initialNodes)
   const [isRunning, setIsRunning] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)

@@ -95,7 +95,7 @@ export function LandingPage() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="text-xs font-mono text-white-muted mb-2">AVAILABLE NOW</div>
-                <h2 className="font-mono text-xl text-white font-medium">Taskgraph</h2>
+                <h2 className="font-mono text-xl text-white font-medium">Dagain</h2>
               </div>
               <span className="text-xs font-mono px-2 py-1 rounded border border-amber/30 bg-amber/10 text-amber">
                 OPEN SOURCE
@@ -106,7 +106,7 @@ export function LandingPage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <a
-                href="/writing/taskgraph"
+                href="/writing/dagain"
                 className="inline-flex items-center gap-2 px-4 py-2 border border-amber/50 text-amber font-mono text-sm rounded hover:bg-amber/10 transition-colors"
               >
                 Read the deep dive
@@ -115,7 +115,7 @@ export function LandingPage() {
                 </svg>
               </a>
               <a
-                href="https://github.com/knot0-com/taskgraph"
+                href="https://github.com/knot0-com/dagain"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 border border-white-muted/30 text-white-dim font-mono text-sm rounded hover:border-white-muted hover:text-white transition-colors"
