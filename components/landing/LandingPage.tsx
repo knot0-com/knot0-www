@@ -49,12 +49,10 @@ export function LandingPage() {
               </span>
             </div>
             <h1 className="font-mono text-3xl md:text-4xl lg:text-5xl text-white font-bold mb-4 leading-tight">
-              AI that builds and runs automations.
-              <br />
-              <span className="text-amber">Governed.</span>
+              Run AI agents anywhere.
             </h1>
             <p className="font-mono text-white-dim text-base md:text-lg max-w-xl">
-              We're building infrastructure for AI agents that write code, execute it anywhere, and stay under your control.
+              Orchestration, execution, and governance for production AI.
             </p>
           </div>
 
