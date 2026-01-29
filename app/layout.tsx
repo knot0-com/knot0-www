@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
+import { PageBackground } from '@/components/PageBackground'
 import './fonts.css'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Knot0 - AI that builds and runs automations. Governed.',
-  description: 'Describe what you need. Agent discovers context and writes the code. Runners execute it anywhere. You stay in control.',
+  title: 'Knot0 - Run AI agents anywhere.',
+  description: 'Orchestration, execution, and governance for production AI.',
   metadataBase: new URL('https://www.knot0.com'),
 }
 
@@ -18,7 +19,10 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#0a0a0a" />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <PageBackground />
+        {children}
+      </body>
     </html>
   )
 }
