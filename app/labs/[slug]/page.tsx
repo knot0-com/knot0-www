@@ -68,8 +68,8 @@ export default async function ToolPage({
     <div className="min-h-screen bg-black text-white">
       <Header />
 
-      <main className="pt-24 pb-16 px-6 md:px-12 lg:px-16">
-        <div className="max-w-4xl">
+      <main className="pt-24 2xl:pt-32 pb-16 2xl:pb-24 px-6 md:px-12 lg:px-16 2xl:px-24">
+        <div className="max-w-4xl 2xl:max-w-5xl">
           {/* Breadcrumb */}
           <nav className="mb-8 text-sm font-mono text-white-muted">
             <a href="/labs" className="hover:text-white transition-colors">Labs</a>
@@ -80,7 +80,7 @@ export default async function ToolPage({
           {/* Header */}
           <div className="mb-12">
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-4xl md:text-5xl font-bold font-mono text-amber">
+              <h1 className="text-4xl md:text-5xl 2xl:text-6xl font-bold font-mono text-amber">
                 {tool.name}
               </h1>
               <span className={`text-xs font-mono px-2 py-1 rounded border ${statusColors[tool.status]}`}>
@@ -88,7 +88,7 @@ export default async function ToolPage({
               </span>
             </div>
 
-            <p className="text-xl text-white-dim font-mono mb-6">
+            <p className="text-xl 2xl:text-2xl text-white-dim font-mono mb-6">
               {tool.tagline}
             </p>
 
@@ -187,8 +187,8 @@ export default async function ToolPage({
       </main>
 
       {/* Footer */}
-      <footer className="py-6 px-6 md:px-12 lg:px-16 border-t border-black-border">
-        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-mono text-white-muted">
+      <footer className="py-6 2xl:py-8 px-6 md:px-12 lg:px-16 2xl:px-24 border-t border-black-border">
+        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 text-sm 2xl:text-base font-mono text-white-muted">
           <div className="flex items-center gap-2">
             <TrefoilLogo size={20} />
             <span>Knot0</span>

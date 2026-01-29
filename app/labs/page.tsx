@@ -38,9 +38,9 @@ export default function LabsPage() {
     <div className="min-h-screen bg-black text-white">
       <Header />
 
-      <main className="pt-24 pb-16 px-6 md:px-12 lg:px-16">
+      <main className="pt-24 2xl:pt-32 pb-16 2xl:pb-24 px-6 md:px-12 lg:px-16 2xl:px-24">
         {/* Hero */}
-        <div className="max-w-4xl mb-16">
+        <div className="max-w-4xl 2xl:max-w-5xl mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ export default function LabsPage() {
             className="flex items-center gap-4 mb-6"
           >
             <AnimatedTrefoil size={48} loop={false} />
-            <h1 className="text-4xl md:text-5xl font-bold font-mono text-amber">
+            <h1 className="text-4xl md:text-5xl 2xl:text-6xl font-bold font-mono text-amber">
               LABS
             </h1>
           </motion.div>
@@ -57,7 +57,7 @@ export default function LabsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-lg text-white-dim font-mono leading-relaxed"
+            className="text-lg 2xl:text-xl text-white-dim font-mono leading-relaxed"
           >
             Open source tools and experiments from the Knot0 team.
             <br />
@@ -74,7 +74,7 @@ export default function LabsPage() {
             className="border border-black-border rounded-lg overflow-hidden"
           >
             {/* Table Header */}
-            <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-black-light border-b border-black-border text-xs font-mono text-white-muted">
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 2xl:px-8 py-3 2xl:py-4 bg-black-light border-b border-black-border text-xs 2xl:text-sm font-mono text-white-muted">
               <div className="col-span-2">NAME</div>
               <div className="col-span-1">STATUS</div>
               <div className="col-span-6">DESCRIPTION</div>
@@ -88,7 +88,7 @@ export default function LabsPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3, delay: 0.3 + index * 0.05 }}
-                className="group grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 py-4 border-b border-black-border last:border-b-0 hover:bg-black-light/50 transition-colors"
+                className="group grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 2xl:px-8 py-4 2xl:py-5 border-b border-black-border last:border-b-0 hover:bg-black-light/50 transition-colors"
               >
                 {/* Name */}
                 <div className="md:col-span-2">
@@ -109,7 +109,7 @@ export default function LabsPage() {
 
                 {/* Description */}
                 <div className="md:col-span-6">
-                  <p className="text-white-dim text-sm font-mono">
+                  <p className="text-white-dim text-sm 2xl:text-base font-mono">
                     <span className="text-white">{tool.oneLiner}</span>
                     <span className="hidden lg:inline text-white-muted"> — {tool.description}</span>
                   </p>
@@ -188,8 +188,8 @@ export default function LabsPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 px-6 md:px-12 lg:px-16 border-t border-black-border">
-        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-mono text-white-muted">
+      <footer className="py-6 2xl:py-8 px-6 md:px-12 lg:px-16 2xl:px-24 border-t border-black-border">
+        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 text-sm 2xl:text-base font-mono text-white-muted">
           <div className="flex items-center gap-2">
             <TrefoilLogo size={20} />
             <span>Knot0</span>

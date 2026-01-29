@@ -38,8 +38,8 @@ export default async function WritingArticlePage({ params }: PageProps) {
     <div className="min-h-screen bg-black text-white">
       <Header />
 
-      <main className="pt-20 pb-16 px-4">
-        <div className="max-w-2xl mx-auto">
+      <main className="pt-20 2xl:pt-28 pb-16 2xl:pb-24 px-6 md:px-12 lg:px-16 2xl:px-24">
+        <div className="max-w-2xl 2xl:max-w-3xl mx-auto">
           <Link
             href="/writing"
             className="inline-flex items-center text-white-muted hover:text-amber transition-colors mb-8 font-mono text-sm"
@@ -49,17 +49,17 @@ export default async function WritingArticlePage({ params }: PageProps) {
 
           <article>
             <header className="mb-10">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white font-mono">
+              <h1 className="text-3xl sm:text-4xl 2xl:text-5xl font-bold text-white font-mono">
                 {post.title}
               </h1>
               {post.subtitle && (
-                <p className="mt-3 text-lg text-white-dim font-mono">
+                <p className="mt-3 text-lg 2xl:text-xl text-white-dim font-mono">
                   {post.subtitle}
                 </p>
               )}
             </header>
 
-            <div className="prose prose-invert prose-amber max-w-none font-mono text-white-dim prose-headings:text-white prose-headings:font-mono prose-a:text-amber prose-strong:text-white prose-code:text-cyan prose-code:bg-black-light prose-code:px-1 prose-code:rounded prose-pre:bg-black-light prose-pre:border prose-pre:border-black-border">
+            <div className="prose prose-invert prose-amber max-w-none font-mono text-white-dim 2xl:text-lg 2xl:leading-relaxed prose-headings:text-white prose-headings:font-mono prose-a:text-amber prose-strong:text-white prose-code:text-cyan prose-code:bg-black-light prose-code:px-1 prose-code:rounded prose-pre:bg-black-light prose-pre:border prose-pre:border-black-border">
               <MDXRemote
                 source={post.content}
                 components={mdxComponents}
@@ -105,8 +105,8 @@ export default async function WritingArticlePage({ params }: PageProps) {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 px-4 border-t border-black-border">
-        <div className="max-w-2xl mx-auto flex items-center justify-between text-sm font-mono text-white-muted">
+      <footer className="py-6 2xl:py-8 px-6 md:px-12 lg:px-16 2xl:px-24 border-t border-black-border">
+        <div className="max-w-2xl 2xl:max-w-3xl mx-auto flex items-center justify-between text-sm 2xl:text-base font-mono text-white-muted">
           <div className="flex items-center gap-2">
             <TrefoilLogo size={20} />
             <span>Knot0</span>

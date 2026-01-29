@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { PageBackground } from '@/components/PageBackground'
 import './fonts.css'
 import './globals.css'
 
@@ -20,7 +19,6 @@ export default function RootLayout({
         <meta name="theme-color" content="#0a0a0a" />
       </head>
       <body suppressHydrationWarning>
-        <PageBackground />
         {children}
       </body>
     </html>

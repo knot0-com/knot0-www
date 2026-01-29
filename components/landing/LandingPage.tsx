@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Header } from './Header'
+import { PageBackground } from '@/components/PageBackground'
 
 export function LandingPage() {
   const [email, setEmail] = useState('')
@@ -35,6 +36,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative">
+      <PageBackground />
       <Header />
 
       <main className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-16 2xl:px-24 py-16 2xl:py-24 relative z-10">
