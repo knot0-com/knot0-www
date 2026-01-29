@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Header } from './Header'
-import { AnimatedTrefoil } from '@/components/logo'
 
 export function LandingPage() {
   const [email, setEmail] = useState('')
@@ -42,12 +41,7 @@ export function LandingPage() {
         <div className="max-w-3xl mx-auto w-full">
           {/* Hero */}
           <div className="mb-12">
-            <div className="flex items-center gap-3 mb-6">
-              <AnimatedTrefoil size={40} loop={false} />
-              <span className="text-xs font-mono text-white-muted border border-white-muted/30 px-2 py-0.5 rounded">
-                STEALTH
-              </span>
-            </div>
+            <div className="mb-6" />
             <h1 className="font-mono text-3xl md:text-4xl lg:text-5xl text-white font-bold mb-4 leading-tight">
               Run AI agents anywhere.
             </h1>
