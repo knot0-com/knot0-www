@@ -1,0 +1,127 @@
+---
+title: "Vibe Testing"
+subtitle: "Using LLM reasoning to find spec gaps before writing code"
+order: 5
+---
+
+## The Completeness Problem
+
+We test code obsessively. Unit tests. Integration tests. E2E tests. Load tests. Fuzz tests. CI pipelines that catch a misplaced comma at 2am.
+
+But the documents that *define* what to build? We review those in a meeting. Someone nods, says "looks good," and we start coding.
+
+Then, a week in: "Wait — the spec doesn't say what happens when the payment fails mid-checkout." A Slack thread. A meeting. A decision made under deadline pressure that contradicts page 12 of the original design.
+
+This isn't a discipline problem. It's a tooling problem. We have no way to *run* a specification and see where it breaks.
+
+## Specs Are Programs That Nobody Executes
+
+A specification is a program written in natural language. It has inputs (user actions, system events), control flow (if this, then that), state transitions (pending → active → complete), and outputs (API responses, UI states, side effects).
+
+The difference is that nobody executes it. We read it. We reason about it in our heads. We *think* we've traced the paths. But human working memory holds about seven items. A real system has thousands of interacting states across dozens of documents.
+
+The gaps hide in the interactions. The payment spec says "retry 3 times on failure." The inventory spec says "hold stock for 5 minutes." Neither mentions what happens to the inventory hold while the payment is retrying. That gap sits quietly until someone builds it and files a blocking ticket.
+
+## Vibe Testing
+
+A vibe test is a natural-language scenario that an LLM executes against your spec documents. Not code execution — *reasoning* execution.
+
+You write a story: a realistic persona, a concrete goal, a step-by-step walkthrough of what they do. You hand it to an LLM alongside all your spec documents. The LLM traces through each step, identifies which spec sections govern it, and flags everywhere the specs are silent, contradictory, or ambiguous.
+
+```
+1. LLM reads all spec documents as context
+2. LLM reads one scenario
+3. For each step in the scenario:
+   - Identify the governing spec section
+   - Trace the data flow through the system
+   - Name the exact primitive activated
+   - If no spec governs this step → GAP
+   - If two specs contradict → CONFLICT
+   - If the spec is unclear → AMBIGUITY
+4. Produce a structured report with severity ratings
+```
+
+The output is a coverage matrix and a gap report. Which documents were exercised, which were not, and — critically — where the spec cannot answer a concrete question about real usage.
+
+## The Mechanism
+
+Here's where it matters: vibe tests work because the task is *exactly* what LLMs are good at.
+
+**Cross-document reasoning.** A specification might span 20+ documents. Humans lose track of interactions between document 3 and document 17. An LLM holds them all in context simultaneously. It doesn't "forget" that the auth spec issues tokens with a 15-minute TTL while the checkout spec assumes sessions last an hour.
+
+**Chain-of-thought simulation.** "If a customer adds items to cart, starts checkout, their payment fails, the retry succeeds on attempt 3 — but the inventory hold expired at minute 6. What state is the order in?" This is sequential reasoning across multiple abstraction layers. It's the core capability of modern LLMs.
+
+**Literal interpretation.** Humans fill in gaps unconsciously. An engineer reads a spec and *assumes* the error recovery path exists because "of course we handle that." The LLM doesn't assume. If the spec doesn't define it, it flags it.
+
+## Anatomy of a Vibe Test
+
+Each test has six components:
+
+| Component | Purpose |
+|-----------|---------|
+| **Persona** | Who is using the system — skills, constraints, expectations |
+| **Environment** | Deployment mode, hardware, network, access method |
+| **Goal** | What they want to accomplish, in their own words |
+| **Scenario** | Step-by-step interaction with the system |
+| **Primitives exercised** | Which spec concepts activate at each step |
+| **Gap detection prompts** | Specific questions the spec must answer |
+
+The scenario is the load-bearing part. It must be concrete enough to force the spec into specifics. Not "user completes a purchase" but "Sarah adds 3 items to cart, enters checkout, her first payment attempt is declined, she retries with a different card, and expects a confirmation email within 30 seconds."
+
+Concreteness is what turns a spec review into a spec test.
+
+## What Falls Out
+
+Say you're building an e-commerce platform. Your spec spans 15 documents: auth, payments, inventory, orders, notifications, shipping, the API gateway, the admin dashboard.
+
+You write four vibe tests — a first-time buyer, a returning customer with saved cards, a merchant managing inventory, an admin investigating a failed order. Each traces a different path through the system.
+
+The results from a real run:
+
+**Blocking gaps** — the spec literally could not answer how to proceed. The payment retry spec and inventory hold spec contradict each other on timing. The notification service has no spec for delivery failures. The auth spec doesn't define what happens to an in-progress checkout when the session token expires.
+
+**Degraded gaps** — workarounds exist but they're fragile. No spec for partial refunds across split shipments. No defined behavior when the shipping provider webhook arrives before the order is marked as paid. Race condition between the inventory service releasing a hold and a concurrent purchase.
+
+**Cosmetic gaps** — missing conveniences. No order timeline view for customer support. No bulk export format for merchant inventory reports.
+
+Each of these would have surfaced as a blocking ticket, a redesign, or an incident — weeks or months into implementation. The vibe tests found them in the time it takes to write a scenario and wait for a response.
+
+## When to Run Them
+
+Vibe testing belongs in the gap between "specs written" and "implementation started." It's the pressure test that validates your design against usage patterns you haven't built yet.
+
+It's also a regression check. After updating a spec document, re-run the vibe tests. New gaps appear when a change in one document breaks assumptions in another. The coverage matrix catches this mechanically.
+
+```
+for each vibe_test in tests/:
+    context = load_all_specs()
+    result = llm.simulate(context, vibe_test)
+    gaps = result.filter(status in [GAP, CONFLICT, AMBIGUITY])
+    report.append(gaps)
+
+diff = compare(report, last_report)
+if diff.new_gaps:
+    alert("Spec regression detected")
+```
+
+## What This Is Not
+
+Vibe testing does not replace real testing. It doesn't execute code. It doesn't measure latency. It doesn't find race conditions or memory leaks. It operates entirely in the domain of reasoning about design documents.
+
+It also doesn't fix bad specs. If your specifications are incoherent, the LLM will flag everything as a gap. That's still useful information — it tells you the spec needs rewriting before anyone should build against it — but it's a different problem.
+
+And it's not infallible. LLMs can miss subtle logical contradictions. They can hallucinate spec coverage that doesn't exist. The gap report is a starting point for human review, not a replacement for it.
+
+## Why This Exists
+
+The cost of finding a problem escalates at every phase transition.
+
+During spec review: a conversation. During implementation: a rewrite. During integration: a redesign. In production: an incident.
+
+Most spec gaps are found during implementation or later, because we had no way to test specs earlier. Vibe testing is that way. It moves the discovery of design flaws to the cheapest possible moment — before anyone has written code, allocated sprints, or made promises to customers.
+
+The spec is the first artifact. It should be the first thing tested.
+
+---
+
+Open source: [github.com/knot0-com/vibe-testing](https://github.com/knot0-com/vibe-testing) — available as an agent skill for Claude Code, Codex, Gemini CLI, and others.
