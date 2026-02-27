@@ -89,9 +89,9 @@ But it's still ephemeral. Each command is a one-shot. The agent runs `grep`, get
 
 These agents are powerful because they have the entire operating system as their action space. But their memory model is still the context window. Every `cat`, every `grep`, every test output — it all lands in context and stays there forever.
 
-## Step 3: The REPL Paper
+## Step 3: The RLM Paper
 
-In December 2025, Zhang, Kraska, and Khattab published [Reactive Language Models](https://arxiv.org/html/2512.24601v1). The key insight: instead of ephemeral scripts, give the agent a REPL where variables survive across tool calls within a single task. The agent accumulates state — and because only `print()` output enters context, the intermediate state stays in the scratchpad, not in the conversation.
+In December 2025, Zhang, Kraska, and Khattab published [Recursive Language Models](https://arxiv.org/html/2512.24601v1). The key insight: instead of ephemeral scripts, give the agent a REPL where variables survive across tool calls within a single task. The agent accumulates state — and because only `print()` output enters context, the intermediate state stays in the scratchpad, not in the conversation.
 
 ```js
 // repl call #1: query and store
