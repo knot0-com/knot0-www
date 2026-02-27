@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Header } from './Header'
 import { PageBackground } from '@/components/PageBackground'
+import { FadeIn } from '@/components/motion/fade-in'
 
 export function LandingPage() {
   const [email, setEmail] = useState('')
@@ -42,59 +43,64 @@ export function LandingPage() {
       <main className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-16 2xl:px-24 py-16 2xl:py-24 relative z-10">
         <div className="max-w-3xl 2xl:max-w-5xl mx-auto w-full">
           {/* Hero */}
-          <div className="mb-12">
-            {/* Accent line */}
-            <div className="w-12 2xl:w-16 h-px bg-amber mb-8 2xl:mb-10" />
+          <FadeIn>
+            <div className="mb-12">
+              {/* Accent line */}
+              <div className="w-12 2xl:w-16 h-px bg-amber mb-8 2xl:mb-10" />
 
-            <h1 className="font-mono text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl text-white font-bold mb-4 2xl:mb-6 leading-tight">
-              Run AI agents{' '}
-              <span className="text-amber">anywhere.</span>
-            </h1>
-            <p className="font-mono text-white-dim text-base md:text-lg 2xl:text-xl max-w-xl 2xl:max-w-2xl">
-              Orchestration, execution, and governance for production AI.
-            </p>
-          </div>
+              <h1 className="font-mono text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl text-white font-bold mb-4 2xl:mb-6 leading-tight">
+                Run AI agents{' '}
+                <span className="text-amber">anywhere.</span>
+              </h1>
+              <p className="font-mono text-white-dim text-base md:text-lg 2xl:text-xl max-w-xl 2xl:max-w-2xl">
+                Orchestration, execution, and governance for production AI.
+              </p>
+            </div>
+          </FadeIn>
 
           {/* Signup */}
-          <div className="mb-16">
-            {status === 'success' ? (
-              <div className="flex items-center gap-2 text-green-neon font-mono text-sm">
-                <span>✓</span>
-                <span>You're on the list. We'll be in touch.</span>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 2xl:gap-4 max-w-md 2xl:max-w-lg">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  required
-                  disabled={status === 'loading'}
-                  className="flex-1 px-4 py-3 2xl:px-5 2xl:py-4 bg-black-light border border-black-border rounded font-mono text-sm 2xl:text-base text-white placeholder:text-white-muted focus:outline-none focus:border-amber/50 transition-colors disabled:opacity-50"
-                />
-                <button
-                  type="submit"
-                  disabled={status === 'loading'}
-                  className="px-6 py-3 2xl:px-8 2xl:py-4 bg-amber text-black font-mono text-sm 2xl:text-base font-medium rounded hover:bg-amber/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,176,0,0.15)] hover:shadow-[0_0_30px_rgba(255,176,0,0.25)]"
-                >
-                  {status === 'loading' ? 'Joining...' : 'Get Early Access'}
-                </button>
-              </form>
-            )}
-            {status === 'error' && (
-              <p className="mt-2 text-red-500 font-mono text-sm">{errorMsg}</p>
-            )}
-          </div>
+          <FadeIn delay={0.1}>
+            <div className="mb-16">
+              {status === 'success' ? (
+                <div className="flex items-center gap-2 text-green-neon font-mono text-sm">
+                  <span>✓</span>
+                  <span>You&apos;re on the list. We&apos;ll be in touch.</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 2xl:gap-4 max-w-md 2xl:max-w-lg">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    required
+                    disabled={status === 'loading'}
+                    className="flex-1 px-4 py-3 2xl:px-5 2xl:py-4 bg-black-light border border-black-border rounded font-mono text-sm 2xl:text-base text-white placeholder:text-white-muted focus:outline-none focus:border-amber/50 transition-colors disabled:opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === 'loading'}
+                    className="px-6 py-3 2xl:px-8 2xl:py-4 bg-amber text-black font-mono text-sm 2xl:text-base font-medium rounded hover:bg-amber/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,176,0,0.15)] hover:shadow-[0_0_30px_rgba(255,176,0,0.25)]"
+                  >
+                    {status === 'loading' ? 'Joining...' : 'Get Early Access'}
+                  </button>
+                </form>
+              )}
+              {status === 'error' && (
+                <p className="mt-2 text-red-500 font-mono text-sm">{errorMsg}</p>
+              )}
+            </div>
+          </FadeIn>
 
           {/* Dagain Feature */}
-          <div className="border border-black-border rounded-lg p-6 2xl:p-8 bg-black-light/30 backdrop-blur-sm">
+          <FadeIn delay={0.2}>
+          <div className="group border border-black-border border-l-2 border-l-amber/40 rounded-lg p-6 2xl:p-8 bg-black-light/30 backdrop-blur-sm hover:border-amber/30 hover:-translate-y-0.5 transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="text-xs font-mono text-white-muted mb-2">AVAILABLE NOW</div>
                 <h2 className="font-mono text-xl 2xl:text-2xl text-white font-medium">Dagain</h2>
               </div>
-              <span className="text-xs font-mono px-2 py-1 rounded border border-amber/30 bg-amber/10 text-amber">
+              <span className="badge-pulse text-xs font-mono px-2 py-1 rounded border border-amber/30 bg-amber/10 text-amber">
                 OPEN SOURCE
               </span>
             </div>
@@ -124,8 +130,10 @@ export function LandingPage() {
               </a>
             </div>
           </div>
+          </FadeIn>
 
           {/* Trust cues */}
+          <FadeIn delay={0.3}>
           <div className="mt-12 2xl:mt-16 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs 2xl:text-sm font-mono text-white-muted">
             <a
               href="https://github.com/knot0-com"
@@ -143,20 +151,34 @@ export function LandingPage() {
             <span className="text-white-muted/30">•</span>
             <span>Rust + Python</span>
           </div>
+          </FadeIn>
         </div>
       </main>
 
-      {/* Minimal Footer */}
-      <footer className="py-6 2xl:py-8 px-6 md:px-12 lg:px-16 2xl:px-24 border-t border-black-border relative z-10">
-        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 text-sm 2xl:text-base font-mono text-white-muted">
-          <span>Knot0</span>
-          <div className="flex gap-6">
-            <a href="/writing" className="hover:text-white transition-colors">Writing</a>
-            <a href="/labs" className="hover:text-white transition-colors">Labs</a>
-            <a href="https://github.com/knot0-com" className="hover:text-white transition-colors">GitHub</a>
+      {/* Footer */}
+      <FadeIn delay={0.4}>
+      <footer className="py-8 2xl:py-10 px-6 md:px-12 lg:px-16 2xl:px-24 relative z-10">
+        {/* Edge-fading divider */}
+        <div className="mb-8 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(255,176,0,0.2) 20%, rgba(255,176,0,0.2) 80%, transparent)' }} />
+
+        <div className="max-w-3xl 2xl:max-w-5xl mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-sm font-mono">
+            <span className="text-amber font-bold">KNOT0</span>
+            <span className="text-white-muted/30">·</span>
+            <span className="text-white-muted text-xs">&copy; {new Date().getFullYear()}</span>
+          </div>
+          <div className="flex gap-6 text-sm font-mono">
+            <a href="/writing" className="text-white-muted hover:text-white transition-colors">Writing</a>
+            <a href="/labs" className="text-white-muted hover:text-white transition-colors">Labs</a>
+            <a href="https://github.com/knot0-com" className="text-white-muted hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
         </div>
+
+        <div className="mt-4 text-center">
+          <span className="text-[11px] font-mono text-white-muted/40 tracking-wider">Built with Rust + Python</span>
+        </div>
       </footer>
+      </FadeIn>
     </div>
   )
 }
