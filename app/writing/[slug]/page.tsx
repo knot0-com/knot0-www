@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import remarkGfm from 'remark-gfm'
+import rehypePrettyCode from 'rehype-pretty-code'
 import { Header } from '@/components/landing/Header'
 import { TrefoilLogo } from '@/components/logo'
 import { getWritingPost, getAdjacentPosts, getAllWritingPosts } from '@/lib/mdx'
@@ -66,6 +67,12 @@ export default async function WritingArticlePage({ params }: PageProps) {
                 options={{
                   mdxOptions: {
                     remarkPlugins: [remarkGfm],
+                    rehypePlugins: [
+                      [rehypePrettyCode, {
+                        theme: 'vesper',
+                        keepBackground: false,
+                      }],
+                    ],
                   },
                 }}
               />

@@ -39,13 +39,23 @@ export const mdxComponents = {
       {children}
     </a>
   ),
-  code: ({ children }: { children: React.ReactNode }) => (
-    <code className="bg-black-light text-cyan rounded px-1.5 py-0.5 font-mono text-sm">{children}</code>
-  ),
-  pre: ({ children }: { children: React.ReactNode }) => (
-    <pre className="bg-black-light border border-black-border text-white-dim rounded-lg p-4 overflow-x-auto my-6 font-mono text-sm">
+  code: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => {
+    // If inside a <pre> (rehype-pretty-code), don't apply inline code styles
+    const isInPre = 'data-language' in props || 'data-theme' in props || 'style' in props
+    if (isInPre) {
+      return <code {...props}>{children}</code>
+    }
+    return (
+      <code className="bg-black-light text-cyan rounded px-1.5 py-0.5 font-mono text-sm">{children}</code>
+    )
+  },
+  pre: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+    <pre className="bg-black-light border border-black-border rounded-lg p-4 overflow-x-auto my-6 font-mono text-sm [&>code]:grid [&>code]:text-[13px]" {...props}>
       {children}
     </pre>
+  ),
+  figure: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+    <figure className="my-6" {...props}>{children}</figure>
   ),
   table: ({ children }: { children: React.ReactNode }) => (
     <div className="overflow-x-auto my-6 border border-black-border rounded-lg">

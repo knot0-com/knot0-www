@@ -123,3 +123,50 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* rehype-pretty-code - syntax highlighting */
+[data-rehype-pretty-code-figure] pre {
+  background: var(--black-light) !important;
+  border: 1px solid var(--black-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+[data-rehype-pretty-code-figure] code {
+  display: grid;
+  counter-reset: line;
+}
+
+[data-rehype-pretty-code-figure] code > [data-line] {
+  padding: 0 0.25rem;
+  border-left: 2px solid transparent;
+}
+
+[data-rehype-pretty-code-figure] [data-highlighted-line] {
+  background: rgba(255, 176, 0, 0.08);
+  border-left-color: var(--amber);
+}
+
+/* Language label */
+[data-rehype-pretty-code-title] {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--white-muted);
+  padding: 0.5rem 1rem;
+  background: var(--black-light);
+  border: 1px solid var(--black-border);
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  margin-top: 1.5rem;
+}
+
+[data-rehype-pretty-code-title] + pre {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
