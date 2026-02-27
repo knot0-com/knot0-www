@@ -41,8 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 # plans and internal docs
-docs/plans/
-
+docs/plans/*
+docs/
 # remotion
 remotion/
 .env*.local
+tmp/*
