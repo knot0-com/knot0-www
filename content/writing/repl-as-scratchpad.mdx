@@ -91,11 +91,7 @@ These agents are powerful because they have the entire operating system as their
 
 ## Step 3: The REPL Paper
 
-In December 2025, Zhang, Kraska, and Khattab published [Reactive Language Models](https://arxiv.org/html/2512.24601v1). They made two moves at once.
-
-First, the **print contract**: only `print()` output enters context. The agent reads a 200-row query result, processes it, and prints a three-line summary. The three lines enter context. The 200 rows don't. This alone was a breakthrough — the agent becomes its own summarizer instead of dumping every intermediate result into the conversation.
-
-Second, **within-run persistence**. Instead of ephemeral scripts, the agent gets a REPL where variables survive across tool calls within a single task:
+In December 2025, Zhang, Kraska, and Khattab published [Reactive Language Models](https://arxiv.org/html/2512.24601v1). The key insight: instead of ephemeral scripts, give the agent a REPL where variables survive across tool calls within a single task. The agent accumulates state — and because only `print()` output enters context, the intermediate state stays in the scratchpad, not in the conversation.
 
 ```js
 // repl call #1: query and store
