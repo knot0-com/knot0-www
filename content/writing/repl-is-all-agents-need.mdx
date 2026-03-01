@@ -1,0 +1,226 @@
+---
+title: "REPL Is All Agents Need"
+subtitle: "From ephemeral code to persistent scratchpad — how three generations of agent architecture led to one insight"
+order: 6
+---
+
+## Let agents write code
+
+In early 2024, Wang et al. published [CodeAct](https://arxiv.org/abs/2402.01030) at ICML. The idea was deceptively simple: instead of forcing LLMs to pick from a tool menu — `read_file`, `search`, `run_query` — let them write and execute Python code directly.
+
+The results were immediate. CodeAct agents achieved up to 20% higher success rates than JSON and text-based tool-calling alternatives, tested across 17 different LLMs. They also required 30% fewer steps to complete tasks, which translates directly to fewer tokens generated and lower cost. The gains were sharpest on complex tasks, where the ability to compose logic in code — loops, conditionals, string manipulation — meant one turn could replace five tool calls.
+
+There's a telling detail in the benchmarks: agent traces without parsing errors succeeded 21.3% more often than those with errors. JSON tool calls are parsing-error machines. Code isn't.
+
+Genuine breakthrough. Code is a strictly more expressive action space than tool selection. Every tool call can be written as code. Not every program can be expressed as a tool call.
+
+But CodeAct's code was ephemeral. Write a script, execute it, get output, throw it away. The next turn starts fresh. No variables carry over. No state accumulates.
+
+The execution was powerful. The memory was gone.
+
+## Agents that live in the terminal
+
+Then came the coding agents — Claude Code, Codex, Aider, Cursor — and they took CodeAct's insight to its logical conclusion: wire the agent to a real shell.
+
+Claude Code is the clearest expression of this philosophy. Anthropic's team built it as a thin wrapper over the model with minimal scaffolding, following what they call the "bitter lesson" — raw model capability beats heavy tooling abstractions. The entire system runs on just 14 tools: bash, glob, grep, ls, read, write, edit, and a handful more. No vector databases. No embeddings. Just ripgrep and a shell. Boris Cherny, the lead engineer, described it as "not a product as much as a Unix utility."
+
+The results proved the bet. Claude models went from 49% on SWE-Bench Verified (Claude 3.5 Sonnet) to 80.9% (Opus 4.5) — the first model to break 80%, ahead of GPT-5.1 and Gemini 3 Pro. When Devin switched to Claude Sonnet 4.5, planning performance jumped 18% and end-to-end scores jumped 12%.
+
+Now agents don't just write code, they operate. They read files, run tests, execute scripts, pipe output. The entire OS became the action space.
+
+But still ephemeral. Each command is a one-shot. The agent runs grep, gets the output in context, reasons, runs the next command. Every `cat`, every `grep`, every test output — it all lands in context and stays there forever. The architecture is a single-threaded loop: gather context, take action, verify, repeat. Simple and effective — but the context window is a one-way door. Everything that enters, stays.
+
+Powerful action space. Same memory problem.
+
+## The RLM paper
+
+In December 2025, Zhang, Kraska, and Khattab at MIT published [Recursive Language Models](https://arxiv.org/abs/2512.24601). The key insight: give the agent a REPL where variables survive across tool calls within a single task. And — crucially — only `print()` output enters context.
+
+The agent reads a 200-row query result, processes it, and prints a three-line summary. The three lines enter context. The 200 rows don't.
+
+```js
+// repl call #1
+services = await db.query("SELECT * FROM entities WHERE entity_type = 'service'")
+print(`Loaded ${services.length} services`)
+
+// repl call #3: 'services' is still here
+degraded = services.filter(s => s.error_rate > 0.05)
+print(`${degraded.length} degraded`)
+```
+
+The results were striking. RLM could process inputs up to two orders of magnitude beyond model context windows. RLM-Qwen3-8B outperformed vanilla Qwen3-8B by 28.3% on average and approached GPT-5 quality on long-context tasks — while GPT-5 itself degraded as input length grew. On benchmarks like S-NIAH and OOLONG, the pattern was consistent: vanilla models collapse at scale, RLM holds steady.
+
+Fewer turns. Less context waste. Better accuracy.
+
+But the REPL was still ephemeral across runs. Each new task started a fresh environment. When the conversation ended, the scratchpad was wiped clean.
+
+For benchmark tasks with a clear start and end, that's fine. For agents that monitor, learn, and adapt over hours and days — starting from zero every time is the same problem all over again.
+
+---
+
+## The round-trip tax
+
+Here's what all three generations have in common. An agent finding broken services:
+
+```
+Turn 1  → tool: list_services()             → 47 services     → context
+Turn 2  → tool: get_metrics("checkout")      → {errorRate: 0.12} → context
+Turn 3  → tool: get_metrics("payments")      → {errorRate: 0.03} → context
+Turn 4  → tool: get_metrics("auth")          → {errorRate: 0.08} → context
+  ... 44 more turns ...
+Turn 50 → "Based on my analysis..."
+```
+
+Fifty turns. Every result dumped into context. By turn thirty, the model has forgotten why it started. By turn fifty, it summarizes with the confidence of someone who read the Wikipedia abstract.
+
+Now the same task with a scratchpad:
+
+```js
+// Turn 1
+const svcs = await db.query(`
+  SELECT e.*, m.error_rate FROM entities e
+  JOIN metrics m ON m.entity_id = e.id
+  WHERE m.error_rate > 0.05
+`)
+for (const s of svcs) {
+  const deps = await db.query(
+    `SELECT target_id FROM relations WHERE source_id = ?`, [s.id]
+  )
+  print(`${s.display_name}: ${s.error_rate} → ${deps.map(d => d.target_id).join(', ')}`)
+}
+```
+
+Output:
+
+```
+checkout: 0.12 → payments, auth, inventory
+auth: 0.08 → ldap, sessions
+```
+
+Turn 2: "checkout and auth are degraded. checkout depends on auth, so auth is likely the root cause."
+
+Two turns. Two lines of output in context. Done.
+
+## REPL is all agents need
+
+We read the RLM paper in January. By February, we had shipped it as the primary agent loop in Knot0.
+
+We pushed the insight further: the REPL persists across runs.
+
+When an agent finishes, we snapshot every variable and store them. When the agent wakes up again — minutes, hours, or days later — we restore the snapshot. The scratchpad picks up exactly where it left off.
+
+```js
+// Run 1 (Monday morning)
+services = await db.query("SELECT * FROM entities WHERE entity_type = 'service'")
+baseline = services.map(s => ({id: s.id, errorRate: s.error_rate}))
+print(`Baseline captured: ${baseline.length} services`)
+
+// Run 2 (Tuesday, triggered by alert): baseline is still here
+current = await db.query("SELECT * FROM entities WHERE entity_type = 'service'")
+drifted = current.filter(c => {
+  const b = baseline.find(b => b.id === c.id)
+  return b && c.error_rate > b.errorRate * 2
+})
+print(`${drifted.length} services degraded since baseline`)
+```
+
+Cross-run persistence alone would have been enough. But it wasn't even the biggest finding.
+
+The RLM paper positioned the REPL as a solution for a specific class of problems: long-context tasks, knowledge graphs, multi-hop retrieval.
+
+What we found is that the REPL isn't a specialized mode for hard problems. It's the better default for everything.
+
+Simple tasks. Complex tasks. Tasks with one lookup and tasks with fifty. The REPL wins across the board — not because it's smarter, but because it changes what "one turn" means.
+
+Tool-call agent: one turn = one action. Read a file. Run a query. Call an API.
+
+Coding agent: one turn = one command. Run grep. Run a test. Cat a file.
+
+REPL agent: one turn = a program. The model writes code that does ten things, sees only what it chose to print(), and decides what to do next based on the summary it wrote for itself.
+
+## The print contract
+
+Here's the mechanism that makes everything work.
+
+Tool-call agent: the model calls read_file("config.yaml") and the entire file — 200 lines — lands in context. Permanently. The model can't unsee it. Even if it only needed one field.
+
+REPL agent: nothing enters context except what the agent explicitly print()s.
+
+```js
+const config = JSON.parse(await fs.read("config.yaml"))
+const deps = await db.query(
+  "SELECT * FROM relations WHERE source_id = ?", [config.serviceId]
+)
+const metrics = await db.query(
+  "SELECT * FROM metrics WHERE entity_id IN (?)",
+  [deps.map(d => d.target_id)]
+)
+
+// 200 lines of config, 47 relations, 200+ metric rows — all processed.
+// None of it enters context. Only this:
+print(`${deps.length} dependencies. ${metrics.filter(m => m.error_rate > 0.05).length} degraded.`)
+```
+
+Output: `47 dependencies. 3 degraded.`
+
+Seven words. That's what the model sees next turn. Not the config file, not the dependency graph, not the raw metrics. Seven words that the agent chose to remember.
+
+Tool-call agents are cameras. They capture everything and hope the model can find what matters in the footage.
+
+REPL agents are writers. They take notes.
+
+## Composition is the point
+
+A tool-call agent sees a menu. Seventy-two tools. Pick one per turn. Can't combine them. Can't filter results before returning them. Can't loop.
+
+A REPL agent sees a programming environment:
+
+```js
+const broken = await db.query(`
+  SELECT e.*, m.error_rate FROM entities e
+  JOIN metrics m ON m.entity_id = e.id
+  WHERE m.error_rate > 0.05
+`)
+
+for (const svc of broken) {
+  const analysis = await llm_query(
+    `What could cause elevated errors in a ${svc.properties.tech_stack} service?`,
+    JSON.stringify(svc)
+  )
+  print(`## ${svc.display_name}\n${analysis}\n`)
+}
+```
+
+Query. Filter. Loop. Sub-LLM call per result. Formatted output. One turn.
+
+The agent didn't pick a tool. It wrote a program. And the program did things no tool menu could express: a filtered query joined with metrics, iterated with per-item LLM analysis, formatted for human consumption.
+
+This is why the REPL wins even on simple tasks. Even a two-step task — read a file, extract a value — benefits from not polluting context with the entire file.
+
+The simpler the task, the more wasteful the tool-call overhead looks.
+
+## What comes after
+
+Once the REPL is the default loop, other things become possible.
+
+Agents that persist across sessions — not by cramming history into a prompt, but by storing state in variables that outlive any single conversation.
+
+Agents that hand off work to other agents by writing to shared channels, not by serializing context into tool calls.
+
+Agents that improve over time by encoding what they've learned into their own working environment.
+
+The scratchpad turns out to be the foundation, not the ceiling. But that's a different post.
+
+For now: write code, execute it, print what matters, carry state forward. Let the context window hold reasoning, not raw data.
+
+A scratchpad and a database. That's all it took.
+
+---
+
+**References**
+
+- [Knot0](https://knot0.com) — the REPL-primary architecture powers the agent loop
+- [Recursive Language Models](https://arxiv.org/abs/2512.24601) — Zhang, Kraska, Khattab (2025)
+- [CodeAct: Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030) — Wang et al., ICML 2024
+- [Claude Code](https://www.anthropic.com/claude-code) — Anthropic's terminal-native coding agent
+- [Claude Code: Anthropic's Agent in Your Terminal](https://www.latent.space/p/claude-code) — Latent Space podcast with Boris Cherny & Cat Wu
