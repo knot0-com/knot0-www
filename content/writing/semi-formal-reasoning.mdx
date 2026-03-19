@@ -1,0 +1,74 @@
+---
+title: "Semi-Formal Reasoning"
+subtitle: "How a template turned AI code review from assertion into proof"
+order: 7
+---
+
+## The Django bug
+
+Django issue 13670. Two patches for 2-digit year formatting. Similar syntax, similar intent, both modifying the same function. Multiple LLMs asked to compare them concluded: equivalent.
+
+One patch called Python's builtin `format()`. The other called `django.utils.dateformat.format()` — a module-level function that expects a `datetime` object, not a string. The first would raise `AttributeError` in production. The second worked fine. The difference came down to a single import resolution that no reviewer — human or machine — bothered to trace.
+
+This is a case study from [Agentic Code Reasoning](https://arxiv.org/abs/2603.01896), a paper Ugare and Chandra published at Meta in early 2026. The paper isn't about Django bugs. It's about the gap between what LLMs can do during code review and what they actually do when you let them reason freely.
+
+## Free-form reasoning skips steps
+
+The model that got Django wrong had the code in context. It could have traced the import. It could have checked whether `format` was shadowed. It had all the information. But chain-of-thought reasoning doesn't require any of that. The model can write "the function handles this correctly" without citing a single line. In a code review, that claim passes without friction. It sounds right. It might even be right. But it isn't supported.
+
+There's a specific pathology here worth understanding. When two patches look similar, the model pattern-matches on syntax. Similar tokens, similar structure, similar surrounding code — so, equivalent. This works surprisingly often. Syntactically similar patches usually are equivalent. But the failure mode is silent: when they aren't, the model has no mechanism that forces it to notice, because nothing in the reasoning format requires tracing actual execution.
+
+The paper's fix was to add that mechanism.
+
+## The form
+
+The intervention is a template — a structured form with mandatory fields that the model fills out before stating a conclusion.
+
+For patch verification, the fields are: premises (what does the patch change, at which file and line?), imports (where does each name resolve? is anything shadowed?), execution trace (follow the actual call chain, record each step), counterexample search (find one, or explain why none exists), and conclusion (derive from the evidence above).
+
+For fault localization: state what the failing test expects, trace the code path from test to production code, identify where the implementation diverges, rank predictions with evidence.
+
+For code QA: build a function trace table where every entry comes from reading the implementation, not from the function name. Then check: what evidence would support the opposite conclusion?
+
+Every field mandatory. The model can't jump to the conclusion.
+
+Applied to Django 13670, the template hits the `format` call and reaches the import-tracing field. The model reads `from django.utils.dateformat import format` at line 3, follows the definition, discovers it expects `datetime`, and reports the type mismatch. Without the template, the model skips this step because nothing requires it.
+
+Patch equivalence accuracy across the paper's benchmark went from 78% to 93%. Fault localization from 60% to 72% at Top-5. Code QA from 78% to 87%. Same model, same code. The only variable was the reasoning structure.
+
+## What the output looks like
+
+A standard review of the Django patch:
+
+```
+The patch modifies the date formatting logic. It looks correct and
+should handle 2-digit years properly. The function name and usage
+are consistent with the surrounding code.
+```
+
+The same model with the template produces a chain of evidence: `format_date()` at `utils/dateformat.py:142` calls `format(value, format_string)` at line 145. The import at line 3 resolves `format` to `django.utils.dateformat.format`, which calls `value.year` at line 31. A string has no `.year`. Counterexample: `format_date("99", "y")` raises `AttributeError`.
+
+You can verify every claim by reading the cited lines. That's the difference — not better reasoning, but auditable reasoning.
+
+## Running it
+
+We read the paper in March and had it running as a hook within the week.
+
+The hook is simple. After every file edit, it checks `git diff`. When uncommitted changes cross a threshold — 50 lines changed or 3 files touched — it prints a one-line suggestion to run the verification template before committing. It skips docs and config files. It deduplicates so it doesn't nag on every subsequent edit once you're past the threshold.
+
+The threshold is deliberately conservative. Most changes don't need a verification certificate. But there's a point where a diff gets large enough that the author can't hold the full picture — the interactions between the changed function and its callers, the imports, the test coverage. That's where free-form review starts missing things, and where the template pays for itself.
+
+## Where this goes
+
+The template converts a soft task into a structured one. The model already has the capability to trace imports, check for shadowing, enumerate edge cases. The template just refuses to let it skip those steps.
+
+The same approach applies anywhere an LLM makes claims about artifacts. Security audits, compliance checks, architecture reviews — anywhere unsupported assertions are expensive and forcing evidence is cheap.
+
+The next step is closing the loop: the model produces a certificate, finds a counterexample, and proposes a fix in the same pass. The certificate localizes bugs precisely enough — file, line, execution trace — that generating a patch is straightforward. We're working on this now.
+
+---
+
+**References**
+
+- [Agentic Code Reasoning](https://arxiv.org/abs/2603.01896) — Ugare & Chandra, Meta (2026)
+- [github.com/knot0-com/semi-formal-reasoning](https://github.com/knot0-com/semi-formal-reasoning) — agent skill for Claude Code, Codex, Gemini CLI, and others
