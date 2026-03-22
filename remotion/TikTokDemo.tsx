@@ -893,6 +893,67 @@ const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
         )}
       </svg>
 
+      {/* ===== BIG TEXT CALLOUTS ===== */}
+
+      {/* Scene title */}
+      {f < spawnStart && (
+        <div style={{
+          position: 'absolute', top: 50, width: '100%', textAlign: 'center',
+          fontSize: 20, color: TEXT_MUTED, fontFamily: FONT, letterSpacing: 3,
+          opacity: interpolate(f, [0, 8], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+        }}>
+          NO HUMAN INVOLVED
+        </div>
+      )}
+
+      {/* "SELF-EVOLVING" callout — appears when code starts rewriting */}
+      {f >= typeNewStart - 5 && f < recoveryFrame + 10 && (
+        <div style={{
+          position: 'absolute', top: 70, width: '100%', textAlign: 'center',
+          opacity: interpolate(f,
+            [typeNewStart - 5, typeNewStart + 5, recoveryFrame, recoveryFrame + 10],
+            [0, 1, 1, 0],
+            { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+          ),
+        }}>
+          <span style={{
+            fontSize: 42, fontWeight: 700, fontFamily: FONT,
+            color: AMBER,
+            textShadow: `0 0 30px ${AMBER}66, 0 0 60px ${AMBER}33`,
+            letterSpacing: 4,
+          }}>
+            SELF-EVOLVING
+          </span>
+          <div style={{
+            fontSize: 18, color: TEXT_DIM, fontFamily: FONT, marginTop: 8,
+          }}>
+            code rewrites itself inside the server
+          </div>
+        </div>
+      )}
+
+      {/* "SELF-ASSEMBLING" callout — appears when new actor spawns */}
+      {f >= spawnStart && (
+        <div style={{
+          position: 'absolute', top: 50, width: '100%', textAlign: 'center',
+          opacity: spring({ frame: f - spawnStart, fps, config: { damping: 200 } }),
+        }}>
+          <span style={{
+            fontSize: 42, fontWeight: 700, fontFamily: FONT,
+            color: CYAN,
+            textShadow: `0 0 30px ${CYAN}66, 0 0 60px ${CYAN}33`,
+            letterSpacing: 4,
+          }}>
+            SELF-ASSEMBLING
+          </span>
+          <div style={{
+            fontSize: 18, color: TEXT_DIM, fontFamily: FONT, marginTop: 8,
+          }}>
+            new actor writes itself from scratch
+          </div>
+        </div>
+      )}
+
       {/* P99 metric */}
       {f >= typeNewEnd - 5 && (
         <div style={{
