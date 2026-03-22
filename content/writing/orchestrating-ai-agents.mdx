@@ -1,0 +1,97 @@
+---
+title: "Orchestrating AI Agents in Production"
+subtitle: "Why chat threads break, and what to use instead"
+order: 8
+---
+
+## The Coordination Problem
+
+One agent is useful. Two agents are a disaster.
+
+The moment you have multiple AI agents working on the same task — a researcher gathering data, an analyst processing it, a writer producing the report — you hit the coordination wall. Who talks to whom? How does output from one become input to another? What happens when the analyst finds bad data and needs the researcher to re-fetch?
+
+Most teams solve this with glue code. A Python script that calls Agent A, parses the output, feeds it to Agent B, checks the result, maybe retries. It works for demos. It breaks in production.
+
+The failure modes are predictable:
+- **Lost state.** The orchestrator crashes mid-pipeline. Three agents have partial results. Where do you resume?
+- **Invisible coordination.** Agents communicate through the orchestrator's variables. Nobody can inspect what happened or why.
+- **Brittle coupling.** Change one agent's output format and the whole pipeline breaks.
+- **No concurrency.** Agents run sequentially because nobody wants to debug parallel failures.
+
+This is the same set of problems distributed systems solved decades ago. We just forgot the lessons when we started building with LLMs.
+
+## What Orchestration Actually Means
+
+Orchestration is not "calling agents in sequence." That's a script.
+
+Real orchestration handles five things:
+
+**1. Lifecycle management.** Agents start, run, fail, restart, and complete. An orchestrator tracks where each agent is in that cycle and makes the state visible.
+
+**2. Communication.** Agents need to exchange data without knowing each other's internals. This means events (pub/sub for data flow), messages (direct conversation), and shared memory (state that persists across runs).
+
+**3. Durability.** If the system restarts, agents should resume where they left off. Not from scratch. Not from a checkpoint file. From their actual last state.
+
+**4. Dynamic topology.** You don't always know how many agents you need upfront. A simple task needs one. A research task might need a coordinator that spawns five workers, one of which spawns two sub-workers. The orchestrator should handle both.
+
+**5. Observability.** Every decision an agent made, every message it sent, every tool it called — all of it should be queryable after the fact. When something goes wrong at 2am, you need the full trace.
+
+## The Three Approaches
+
+### Approach 1: Framework-based (LangGraph, CrewAI, AutoGen)
+
+Build a graph of agent nodes in Python. Define edges. Run it.
+
+**What works:** Fast to prototype. Good for deterministic pipelines where you know the shape upfront.
+
+**What breaks:** The graph is defined in your code, not discovered at runtime. Adding a node means changing the orchestrator. State lives in Python variables — restart the process and it's gone. Debugging means reading through chained function calls with no centralized trace.
+
+These are libraries, not runtimes. The difference matters when your agent pipeline runs for hours, needs to survive restarts, and must be inspectable by someone who didn't write it.
+
+### Approach 2: Workflow engines (Temporal, Inngest)
+
+Model agents as workflow steps with durable execution.
+
+**What works:** State survives restarts. Retries are built in. You get execution history for free.
+
+**What breaks:** Workflow engines expect deterministic functions. LLM calls are inherently non-deterministic — the same prompt can produce different tool calls. This creates friction: you're fighting the engine's assumptions about how code behaves.
+
+More fundamentally, workflow engines treat the orchestrator as the smart entity and the steps as dumb functions. With agents, the steps are smart too. They make decisions, branch, spawn sub-tasks. The workflow engine becomes a bottleneck rather than a coordinator.
+
+### Approach 3: Actor-based (what we're building)
+
+Model each agent as an actor — a long-lived entity with its own state, inbox, and behavior. Actors communicate through messages and events. The runtime handles lifecycle, persistence, and delivery.
+
+**What works:** Actors are the natural abstraction for agents. Each agent has identity, state, and behavior. They communicate without tight coupling. The runtime handles durability, concurrency, and failure recovery. Dynamic topology is trivial — an actor can spawn more actors.
+
+**What's hard:** The programming model is less familiar than "call function A, then B." You need to think in terms of messages and events rather than return values. There's a learning curve.
+
+But the tradeoffs are right for production. An actor-based runtime gives you durability, observability, and dynamic coordination without forcing your agents into a deterministic straitjacket.
+
+## What Good Orchestration Looks Like
+
+A well-orchestrated multi-agent system has these properties:
+
+**Agents are autonomous but coordinated.** Each agent decides how to accomplish its task. The orchestrator decides which agents exist and what they're trying to achieve. Clean separation.
+
+**Communication is structured.** Not string passing. Events have schemas. Messages have channels. Memory has scopes. You can query "what did Agent X publish to topic Y" without reading logs.
+
+**State is durable by default.** If the system restarts, every agent resumes from its last state. No special checkpointing code required.
+
+**Topology is dynamic.** The coordinator decides at runtime how many agents to spawn based on the task. Simple tasks get one agent. Complex tasks get a tree.
+
+**Everything is observable.** Every run, every decision, every message — stored, queryable, auditable. Not for compliance (though that helps). For debugging.
+
+## The Missing Piece
+
+Most of the discourse around AI agents focuses on the model. Better reasoning. Longer context. Faster inference.
+
+But the model is just one component. The surrounding infrastructure — how agents are started, how they communicate, how they persist, how they're monitored — determines whether agents work in production or only in demos.
+
+The model gives you intelligence. The runtime gives you reliability.
+
+We think the industry is under-invested in the runtime. That's what we're building at Knot0.
+
+---
+
+*Knot0 is a runtime for self-assembling software. Agents that write code, coordinate, and improve over time. [Learn more](https://knot0.com).*
