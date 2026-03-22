@@ -558,212 +558,236 @@ const MontageDiscovery: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
-/** Montage Cut 2: Agent generates fix + sends to servers. */
-const MontageFixAndDeploy: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
-  const localFrame = frame - CUT2_START;
+/** Montage Cut 2-3: Self-evolving servers — code rewrites itself inside. */
+const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
+  const f = frame - CUT2_START;
 
-  // Agent node appears
-  const agentSpring = spring({ frame: localFrame, fps, config: { damping: 200 } });
+  // Old code lines (visible inside cache-layer server)
+  const oldCode = [
+    'cache = new HashMap<>();',
+    'pool = createPool({ max: 10 });',
+    'return cache.get(key);',
+  ];
+  // New code lines (replaces old after evolution)
+  const newCode = [
+    'cache = new LinkedHashMap<>(',
+    '  MAX_SESSIONS, 0.75f, true);',
+    'breaker = new CircuitBreaker();',
+  ];
 
-  // Code materializes around agent (frames 5-15)
-  const codeVisible = interpolate(localFrame, [5, 15], [0, 1], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
+  // Phase timing
+  const showOldCode = f >= 0;
+  const dissolveStart = 8;
+  const dissolveEnd = 16;
+  const typeNewStart = 16;
+  const typeNewEnd = 30;
+  const serverRecovered = f >= 28;
+  const spawnStart = 36;
+  const spawnVisible = f >= spawnStart;
 
-  // Patch flies to servers (frames 16-25)
-  const patchProgress1 = interpolate(localFrame, [16, 24], [0, 1], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
-  const patchProgress2 = interpolate(localFrame, [18, 26], [0, 1], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
+  // Old code dissolve (opacity 1 → 0, each line staggered)
+  const oldLineOpacity = (lineIdx: number) => {
+    const start = dissolveStart + lineIdx * 2;
+    return interpolate(f, [start, start + 6], [1, 0], {
+      extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+    });
+  };
 
-  // Extend into cut 3 time range for server recovery
-  const extFrame = frame - CUT2_START;
+  // New code type-in (each line staggered)
+  const newLineOpacity = (lineIdx: number) => {
+    const start = typeNewStart + lineIdx * 4;
+    return interpolate(f, [start, start + 4], [0, 1], {
+      extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+    });
+  };
 
-  // Server pod status (frames 24-40 — extends into cut 3)
-  const pod1Status = extFrame < 24 ? 'crash' : extFrame < 32 ? 'patching' : 'running';
-  const pod2Status = extFrame < 26 ? 'crash' : extFrame < 35 ? 'patching' : 'running';
+  // Server border color transition
+  const srvColor = f < dissolveStart ? RED
+    : f < typeNewEnd ? AMBER
+    : GREEN;
 
-  // p99 recovery (frames 28-45)
-  const p99 = interpolate(extFrame, [28, 45], [340, 38], {
+  // Evolving label
+  const evolvingVisible = f >= dissolveStart && f < typeNewEnd + 4;
+  const evolvingOpacity = evolvingVisible ? interpolate(
+    f % 12, [0, 6, 12], [1, 0.4, 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  ) : 0;
+
+  // Second server (api-gateway) — healthy throughout
+  const srv2Color = GREEN;
+
+  // Third server spawn
+  const spawnSpring = spawnVisible ? spring({
+    frame: f - spawnStart, fps, config: { damping: 200 },
+  }) : 0;
+
+  // P99 metric
+  const p99 = interpolate(f, [typeNewEnd, typeNewEnd + 15], [340, 38], {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
   const p99Color = p99 > 200 ? RED : p99 > 100 ? AMBER : GREEN;
 
-  const podColor = (status: string) =>
-    status === 'crash' ? RED : status === 'patching' ? AMBER : GREEN;
-  const podLabel = (status: string) =>
-    status === 'crash' ? 'CrashLoop' : status === 'patching' ? 'Restarting...' : 'Running';
-  const podDot = (status: string, f: number) => {
-    const pulse = status === 'patching'
-      ? interpolate(f % 10, [0, 5, 10], [1, 0.3, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
+  // Layout positions (vertical stack for mobile)
+  const boxW = 420;
+  const boxH = 220;
+  const centerX = 540;
+  const gap = 28;
+
+  // Server box component with code visible inside
+  const ServerWithCode: React.FC<{
+    y: number; name: string; color: string;
+    codeLines: { text: string; color: string; opacity: number }[];
+    badge?: string;
+    statusLabel: string;
+  }> = ({ y, name, color, codeLines, badge, statusLabel }) => {
+    const dotPulse = color === AMBER
+      ? interpolate(frame % 10, [0, 5, 10], [1, 0.3, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
       : 1;
-    return pulse;
+    return (
+      <div style={{
+        position: 'absolute',
+        left: centerX - boxW / 2,
+        top: y,
+        width: boxW,
+        height: boxH,
+        border: `2px solid ${color}`,
+        borderRadius: 14,
+        backgroundColor: `${color}0a`,
+        overflow: 'hidden',
+        boxShadow: color === GREEN ? `0 0 20px ${GREEN}22` : color === RED ? `0 0 20px ${RED}22` : 'none',
+      }}>
+        {/* Header bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 16px',
+          borderBottom: `1px solid ${color}33`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 10, height: 10, borderRadius: 5,
+              backgroundColor: color, opacity: dotPulse,
+            }} />
+            <span style={{ fontSize: 15, color: TEXT, fontWeight: 600, fontFamily: FONT }}>{name}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {badge && (
+              <span style={{
+                fontSize: 11, color: CYAN, fontFamily: FONT,
+                padding: '2px 8px', borderRadius: 4,
+                border: `1px solid ${CYAN}44`, backgroundColor: `${CYAN}11`,
+              }}>{badge}</span>
+            )}
+            <span style={{ fontSize: 12, color, fontFamily: FONT }}>{statusLabel}</span>
+          </div>
+        </div>
+        {/* Code visible inside */}
+        <div style={{ padding: '12px 16px', fontFamily: FONT, fontSize: 13, lineHeight: 1.7 }}>
+          {codeLines.map((line, i) => (
+            <div key={i} style={{ color: line.color, opacity: line.opacity, transition: 'none' }}>
+              {line.text}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
-  // Positions
-  const agentX = 540; // center
-  const agentY = 340;
-  const srv1X = 260;
-  const srv1Y = 800;
-  const srv2X = 820;
-  const srv2Y = 800;
+  // Build code lines for cache-layer
+  const cacheCodeLines = f < dissolveStart
+    ? oldCode.map((text, i) => ({ text, color: RED, opacity: 1 }))
+    : f < typeNewStart
+    ? oldCode.map((text, i) => ({ text, color: RED, opacity: oldLineOpacity(i) }))
+    : newCode.map((text, i) => ({ text, color: GREEN, opacity: newLineOpacity(i) }));
 
-  // Patch position (interpolate from agent to server)
-  const patch1X = interpolate(patchProgress1, [0, 1], [agentX, srv1X], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const patch1Y = interpolate(patchProgress1, [0, 1], [agentY + 60, srv1Y - 40], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const patch2X = interpolate(patchProgress2, [0, 1], [agentX, srv2X], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const patch2Y = interpolate(patchProgress2, [0, 1], [agentY + 60, srv2Y - 40], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  // Static code for api-gateway
+  const apiCodeLines = [
+    { text: 'handler = sdk.handler({', color: TEXT_DIM, opacity: 1 },
+    { text: '  trigger: "http.request",', color: TEXT_DIM, opacity: 1 },
+    { text: '  match: "/api/v1/*" });', color: TEXT_DIM, opacity: 1 },
+  ];
 
-  const ServerBox: React.FC<{ x: number; y: number; name: string; status: string }> = ({ x, y, name, status }) => (
-    <div style={{
-      position: 'absolute',
-      left: x - 120,
-      top: y - 60,
-      width: 240,
-      height: 160,
-      border: `2px solid ${podColor(status)}`,
-      borderRadius: 12,
-      backgroundColor: `${podColor(status)}11`,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-    }}>
-      <div style={{ fontSize: 13, color: TEXT_MUTED, letterSpacing: 1 }}>KUBERNETES</div>
-      <div style={{ fontSize: 18, color: TEXT, fontWeight: 600 }}>{name}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
-          width: 10, height: 10, borderRadius: 5,
-          backgroundColor: podColor(status),
-          opacity: podDot(status, frame),
-        }} />
-        <span style={{ fontSize: 15, color: podColor(status) }}>{podLabel(status)}</span>
-      </div>
-    </div>
-  );
+  // Code for new rate-limiter (types itself)
+  const rateLimiterCode = [
+    { text: 'handler = sdk.handler({', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [0, 8], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
+    { text: '  trigger: "traffic.spike",', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [4, 12], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
+    { text: '  action: "rate_limit" });', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [8, 16], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
+  ];
+
+  const y1 = 180;
+  const y2 = y1 + boxH + gap;
+  const y3 = y2 + boxH + gap;
 
   return (
     <div style={{
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      fontFamily: FONT,
-      backgroundColor: BG,
+      position: 'relative', width: '100%', height: '100%',
+      fontFamily: FONT, backgroundColor: BG,
     }}>
-      {/* Agent node */}
-      <div style={{
-        position: 'absolute',
-        left: agentX - 80,
-        top: agentY - 50,
-        width: 160,
-        height: 100,
-        border: `2px solid ${AMBER}`,
-        borderRadius: 12,
-        backgroundColor: `${AMBER}15`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-        opacity: agentSpring,
-        transform: `scale(${interpolate(agentSpring, [0, 1], [0.8, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
-        boxShadow: `0 0 30px ${AMBER}33`,
-      }}>
-        <div style={{ fontSize: 13, color: TEXT_MUTED, letterSpacing: 1 }}>KNOT0 AGENT</div>
-        <div style={{ fontSize: 16, color: AMBER, fontWeight: 600 }}>
-          {localFrame < 15 ? 'Writing fix...' : 'Deploying'}
-        </div>
-      </div>
+      {/* Server 1: cache-layer — evolves */}
+      <ServerWithCode
+        y={y1}
+        name="cache-layer"
+        color={srvColor}
+        codeLines={cacheCodeLines}
+        badge={serverRecovered ? 'v2' : evolvingVisible ? 'evolving...' : 'v1'}
+        statusLabel={f < dissolveStart ? 'CrashLoop' : f < typeNewEnd ? 'Evolving' : 'Running'}
+      />
 
-      {/* Code materializing around agent */}
-      {codeVisible > 0 && codeVisible < 1 && (
+      {/* Evolving indicator */}
+      {evolvingVisible && (
         <div style={{
           position: 'absolute',
-          left: agentX - 140,
-          top: agentY + 60,
-          opacity: codeVisible,
-          fontSize: 11,
-          color: CYAN,
-          lineHeight: 1.5,
-          width: 280,
-          textAlign: 'center',
+          left: centerX - boxW / 2 - 4,
+          top: y1,
+          width: boxW + 8,
+          height: boxH,
+          borderRadius: 16,
+          border: `2px solid ${AMBER}`,
+          opacity: evolvingOpacity * 0.5,
+          pointerEvents: 'none',
+          boxShadow: `0 0 30px ${AMBER}44`,
+        }} />
+      )}
+
+      {/* Server 2: api-gateway — healthy */}
+      <ServerWithCode
+        y={y2}
+        name="api-gateway"
+        color={srv2Color}
+        codeLines={apiCodeLines}
+        badge="v3"
+        statusLabel="Running"
+      />
+
+      {/* Server 3: rate-limiter — spawns from nothing */}
+      {spawnVisible && (
+        <div style={{
+          opacity: spawnSpring,
+          transform: `scale(${interpolate(spawnSpring, [0, 1], [0.85, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
         }}>
-          <span style={{ color: GREEN }}>+LRU cache</span>{' '}
-          <span style={{ color: GREEN }}>+circuit breaker</span>
+          <ServerWithCode
+            y={y3}
+            name="rate-limiter"
+            color={CYAN}
+            codeLines={rateLimiterCode}
+            badge="new"
+            statusLabel="Spawned"
+          />
         </div>
       )}
 
-      {/* Connection lines (SVG) */}
+      {/* Connection lines between servers */}
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-        {/* Agent to Server 1 */}
-        <line
-          x1={agentX} y1={agentY + 50}
-          x2={srv1X} y2={srv1Y - 60}
-          stroke={patchProgress1 >= 1 ? podColor(pod1Status) : TEXT_MUTED}
-          strokeWidth={2}
-          strokeDasharray={patchProgress1 > 0 ? 'none' : '6 4'}
-          opacity={localFrame >= 16 ? 0.6 : 0.15}
-        />
-        {/* Agent to Server 2 */}
-        <line
-          x1={agentX} y1={agentY + 50}
-          x2={srv2X} y2={srv2Y - 60}
-          stroke={patchProgress2 >= 1 ? podColor(pod2Status) : TEXT_MUTED}
-          strokeWidth={2}
-          strokeDasharray={patchProgress2 > 0 ? 'none' : '6 4'}
-          opacity={localFrame >= 18 ? 0.6 : 0.15}
-        />
+        <line x1={centerX} y1={y1 + boxH} x2={centerX} y2={y2}
+          stroke={srvColor} strokeWidth={1.5} opacity={0.3} />
+        <line x1={centerX} y1={y2 + boxH} x2={centerX} y2={y3}
+          stroke={CYAN} strokeWidth={1.5} opacity={spawnSpring * 0.3} />
       </svg>
 
-      {/* Flying patches */}
-      {patchProgress1 > 0 && patchProgress1 < 1 && (
+      {/* P99 metric at bottom */}
+      {f >= typeNewEnd && (
         <div style={{
-          position: 'absolute',
-          left: patch1X - 24,
-          top: patch1Y - 12,
-          width: 48, height: 24,
-          borderRadius: 6,
-          backgroundColor: CYAN,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 10, color: BG, fontWeight: 700,
-          boxShadow: `0 0 16px ${CYAN}`,
-        }}>
-          PATCH
-        </div>
-      )}
-      {patchProgress2 > 0 && patchProgress2 < 1 && (
-        <div style={{
-          position: 'absolute',
-          left: patch2X - 24,
-          top: patch2Y - 12,
-          width: 48, height: 24,
-          borderRadius: 6,
-          backgroundColor: CYAN,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 10, color: BG, fontWeight: 700,
-          boxShadow: `0 0 16px ${CYAN}`,
-        }}>
-          PATCH
-        </div>
-      )}
-
-      {/* Server boxes */}
-      <ServerBox x={srv1X} y={srv1Y} name="prod-k8s-01" status={pod1Status} />
-      <ServerBox x={srv2X} y={srv2Y} name="prod-k8s-02" status={pod2Status} />
-
-      {/* P99 metric */}
-      {extFrame >= 28 && (
-        <div style={{
-          position: 'absolute',
-          bottom: 160,
-          width: '100%',
-          textAlign: 'center',
-          fontSize: 28,
-          color: p99Color,
-          fontWeight: 700,
+          position: 'absolute', bottom: 120, width: '100%', textAlign: 'center',
+          fontSize: 28, color: p99Color, fontWeight: 700, fontFamily: FONT,
           textShadow: p99 <= 100 ? `0 0 20px ${GREEN}` : 'none',
         }}>
           p99: {Math.round(p99)}ms
@@ -978,7 +1002,7 @@ export const TikTokDemo: React.FC = () => {
             <MontageDiscovery frame={frame} />
           </div>
 
-          {/* Cut 2-3: Agent writes fix + deploys to servers */}
+          {/* Cut 2-3: Code evolves inside servers */}
           <div
             style={{
               position: 'absolute',
@@ -986,7 +1010,7 @@ export const TikTokDemo: React.FC = () => {
               opacity: montageCutOpacity(CUT2_START, CUT2_END),
             }}
           >
-            <MontageFixAndDeploy frame={frame} fps={fps} />
+            <MontageEvolve frame={frame} fps={fps} />
           </div>
 
           {/* Cut 4: Resolved */}
