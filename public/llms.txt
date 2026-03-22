@@ -1,0 +1,30 @@
+# Knot0
+
+> Run AI agents anywhere. Orchestration, execution, and governance for production AI.
+
+## What is Knot0?
+
+Knot0 is an agent orchestration platform for production workloads. It provides execution runtime, governance, and observability for AI agents across any infrastructure.
+
+## Key Capabilities
+
+- Agent orchestration and lifecycle management
+- Multi-provider LLM support
+- Built-in governance and safety controls
+- Real-time observability and monitoring
+- Durable execution with suspend/resume
+- Event-driven agent communication
+
+## Open Source Tools
+
+- repl-scratchpad: Persistent REPL scratchpad for coding agents — variables survive across turns
+- semi-formal-reasoning: Structured code verification, fault localization, and semantic analysis
+- vibe-testing: Pressure-test specs with LLM reasoning before writing code
+- dagain: DAG-based orchestration CLI for coding agents
+
+## Links
+
+- Website: https://www.knot0.com
+- GitHub: https://github.com/knot0-com
+- Writing: https://www.knot0.com/writing
+- Labs: https://www.knot0.com/labs

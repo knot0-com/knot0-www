@@ -1,5 +1,23 @@
 import { LandingPage } from '@/components/landing'
 
 export default function Home() {
-  return <LandingPage />
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Knot0',
+            url: 'https://www.knot0.com',
+            logo: 'https://www.knot0.com/logo/knot0-trefoil.svg',
+            description: 'Orchestration, execution, and governance for production AI.',
+            sameAs: ['https://github.com/knot0-com'],
+          }),
+        }}
+      />
+      <LandingPage />
+    </>
+  )
 }

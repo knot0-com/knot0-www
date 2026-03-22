@@ -8,6 +8,19 @@ export const metadata: Metadata = {
   title: 'Knot0 - Run AI agents anywhere.',
   description: 'Orchestration, execution, and governance for production AI.',
   metadataBase: new URL('https://www.knot0.com'),
+  openGraph: {
+    title: 'Knot0 - Run AI agents anywhere.',
+    description: 'Orchestration, execution, and governance for production AI.',
+    url: 'https://www.knot0.com',
+    siteName: 'Knot0',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Knot0 - Run AI agents anywhere.',
+    description: 'Orchestration, execution, and governance for production AI.',
+  },
 }
 
 export default function RootLayout({

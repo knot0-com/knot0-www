@@ -25,6 +25,12 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${post.title} - Knot0`,
     description: post.subtitle,
+    openGraph: {
+      title: `${post.title} - Knot0`,
+      description: post.subtitle,
+      url: `https://www.knot0.com/writing/${slug}`,
+      type: 'article',
+    },
   }
 }
 
@@ -35,8 +41,25 @@ export default async function WritingArticlePage({ params }: PageProps) {
 
   const { prev, next } = getAdjacentPosts(slug)
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.subtitle,
+    url: `https://www.knot0.com/writing/${slug}`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Knot0',
+      url: 'https://www.knot0.com',
+    },
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <Header />
 
       <main className="pt-20 2xl:pt-28 pb-16 2xl:pb-24 px-6 md:px-12 lg:px-16 2xl:px-24">

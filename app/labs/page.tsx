@@ -1,5 +1,7 @@
 'use client'
 
+// metadata is set in labs/layout.tsx (client components cannot export metadata)
+
 import { Header } from '@/components/landing/Header'
 import { TrefoilLogo, AnimatedTrefoil } from '@/components/logo'
 import { motion } from 'framer-motion'
