@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm'
 import rehypePrettyCode from 'rehype-pretty-code'
 import { Header } from '@/components/landing/Header'
 import { TrefoilLogo } from '@/components/logo'
+import { WaitlistCTA } from '@/components/WaitlistCTA'
 import { getWritingPost, getAdjacentPosts, getAllWritingPosts } from '@/lib/mdx'
 import { mdxComponents } from '@/components/mdx'
 
@@ -101,6 +102,8 @@ export default async function WritingArticlePage({ params }: PageProps) {
               />
             </div>
           </article>
+
+          <WaitlistCTA />
 
           {(prev || next) && (
             <nav className="mt-12 pt-8 border-t border-black-border">
