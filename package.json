@@ -10,7 +10,8 @@
     "remotion": "remotion studio remotion/index.ts",
     "remotion:build": "remotion render remotion/index.ts Knot0Demo out/knot0-demo.mp4",
     "remotion:logo": "remotion render remotion/index.ts LogoReveal out/logo-reveal.mp4",
-    "remotion:incident": "remotion render remotion/index.ts IncidentResponse out/incident-response.mp4"
+    "remotion:incident": "remotion render remotion/index.ts IncidentResponse out/incident-response.mp4",
+    "remotion:tiktok": "remotion render remotion/index.ts TikTokDemo out/tiktok-demo.mp4"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
