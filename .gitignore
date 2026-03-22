@@ -43,7 +43,7 @@ next-env.d.ts
 # plans and internal docs
 docs/plans/*
 docs/
-# remotion
-remotion/
+# remotion output
+out/
 .env*.local
 tmp/*
