@@ -565,233 +565,342 @@ const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
 
   // Old code lines (visible inside cache-layer server)
   const oldCode = [
-    'cache = new HashMap<>();',
-    'pool = createPool({ max: 10 });',
-    'return cache.get(key);',
+    { text: 'cache = new HashMap<>();', problem: true },
+    { text: 'pool = createPool({ max: 10 });', problem: true },
+    { text: 'return cache.get(key);', problem: false },
   ];
   // New code lines (replaces old after evolution)
   const newCode = [
     'cache = new LinkedHashMap<>(',
     '  MAX_SESSIONS, 0.75f, true);',
-    'breaker = new CircuitBreaker();',
+    'breaker = new CircuitBreaker({',
+    '  threshold: 5, reset: 10_000',
+    '});',
   ];
 
-  // Phase timing (120 frames total)
-  const showOldCode = f >= 0;
-  const dissolveStart = 15;   // old code starts dissolving
-  const dissolveEnd = 35;
-  const typeNewStart = 35;    // new code starts typing
-  const typeNewEnd = 65;      // new code done
-  const serverRecovered = f >= 60;
-  const spawnStart = 80;      // new actor spawns
+  // === PHASE TIMING (120 frames total) ===
+  // Phase 1: Show broken code with problem highlighted (0-14)
+  // Phase 2: Agent analyzes — "analyzing..." indicator (10-20)
+  // Phase 3: Old code gets red highlight + strikethrough, then dissolves (20-40)
+  // Phase 4: New code types in with cyan glow (40-70)
+  // Phase 5: Recovery ripple + v2 badge (65-80)
+  // Phase 6: New actor spawns from api-gateway (85-115)
+  const analyzeStart = 10;
+  const analyzeEnd = 22;
+  const highlightStart = 18;
+  const dissolveStart = 25;
+  const typeNewStart = 42;
+  const typeNewEnd = 70;
+  const recoveryFrame = 68;
+  const spawnStart = 88;
   const spawnVisible = f >= spawnStart;
 
-  // Old code dissolve (opacity 1 → 0, each line staggered)
+  // Problem line highlight (red background glow before dissolve)
+  const problemHighlight = (lineIdx: number) => {
+    if (!oldCode[lineIdx].problem) return 0;
+    return interpolate(f, [highlightStart, highlightStart + 6], [0, 1], {
+      extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+    });
+  };
+
+  // Old code dissolve (opacity 1 → 0, staggered)
   const oldLineOpacity = (lineIdx: number) => {
     const start = dissolveStart + lineIdx * 5;
-    return interpolate(f, [start, start + 12], [1, 0], {
+    return interpolate(f, [start, start + 10], [1, 0], {
       extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
     });
   };
 
-  // New code type-in (each line staggered)
-  const newLineOpacity = (lineIdx: number) => {
-    const start = typeNewStart + lineIdx * 8;
-    return interpolate(f, [start, start + 8], [0, 1], {
+  // New code type-in (staggered, with glow)
+  const newLineProgress = (lineIdx: number) => {
+    const start = typeNewStart + lineIdx * 6;
+    return interpolate(f, [start, start + 6], [0, 1], {
       extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
     });
   };
 
-  // Server border color transition
-  const srvColor = f < dissolveStart ? RED
+  // Server border color
+  const srvColor = f < highlightStart ? RED
     : f < typeNewEnd ? AMBER
     : GREEN;
 
-  // Evolving label
-  const evolvingVisible = f >= dissolveStart && f < typeNewEnd + 4;
-  const evolvingOpacity = evolvingVisible ? interpolate(
-    f % 12, [0, 6, 12], [1, 0.4, 1],
+  // Recovery ripple (expanding ring at recoveryFrame)
+  const rippleActive = f >= recoveryFrame && f < recoveryFrame + 20;
+  const rippleProgress = rippleActive ? interpolate(
+    f, [recoveryFrame, recoveryFrame + 20], [0, 1],
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   ) : 0;
 
-  // Second server (api-gateway) — healthy throughout
-  const srv2Color = GREEN;
+  // Analyzing indicator
+  const analyzingVisible = f >= analyzeStart && f < analyzeEnd;
+  const analyzeDots = analyzingVisible ? '.'.repeat(1 + Math.floor((f - analyzeStart) / 4) % 3) : '';
 
-  // Third server spawn
+  // Third server spawn — springs from api-gateway position
   const spawnSpring = spawnVisible ? spring({
-    frame: f - spawnStart, fps, config: { damping: 200 },
+    frame: f - spawnStart, fps, config: { damping: 15, stiffness: 100 },
   }) : 0;
 
   // P99 metric
-  const p99 = interpolate(f, [typeNewEnd, typeNewEnd + 25], [340, 38], {
+  const p99 = interpolate(f, [typeNewEnd - 5, typeNewEnd + 20], [340, 38], {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
   const p99Color = p99 > 200 ? RED : p99 > 100 ? AMBER : GREEN;
 
-  // Layout positions (vertical stack for mobile)
-  const boxW = 420;
-  const boxH = 220;
+  // Layout
+  const boxW = 480;
+  const boxH = 260;
   const centerX = 540;
-  const gap = 28;
-
-  // Server box component with code visible inside
-  const ServerWithCode: React.FC<{
-    y: number; name: string; color: string;
-    codeLines: { text: string; color: string; opacity: number }[];
-    badge?: string;
-    statusLabel: string;
-  }> = ({ y, name, color, codeLines, badge, statusLabel }) => {
-    const dotPulse = color === AMBER
-      ? interpolate(frame % 10, [0, 5, 10], [1, 0.3, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
-      : 1;
-    return (
-      <div style={{
-        position: 'absolute',
-        left: centerX - boxW / 2,
-        top: y,
-        width: boxW,
-        height: boxH,
-        border: `2px solid ${color}`,
-        borderRadius: 14,
-        backgroundColor: `${color}0a`,
-        overflow: 'hidden',
-        boxShadow: color === GREEN ? `0 0 20px ${GREEN}22` : color === RED ? `0 0 20px ${RED}22` : 'none',
-      }}>
-        {/* Header bar */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 16px',
-          borderBottom: `1px solid ${color}33`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 10, height: 10, borderRadius: 5,
-              backgroundColor: color, opacity: dotPulse,
-            }} />
-            <span style={{ fontSize: 15, color: TEXT, fontWeight: 600, fontFamily: FONT }}>{name}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {badge && (
-              <span style={{
-                fontSize: 11, color: CYAN, fontFamily: FONT,
-                padding: '2px 8px', borderRadius: 4,
-                border: `1px solid ${CYAN}44`, backgroundColor: `${CYAN}11`,
-              }}>{badge}</span>
-            )}
-            <span style={{ fontSize: 12, color, fontFamily: FONT }}>{statusLabel}</span>
-          </div>
-        </div>
-        {/* Code visible inside */}
-        <div style={{ padding: '12px 16px', fontFamily: FONT, fontSize: 13, lineHeight: 1.7 }}>
-          {codeLines.map((line, i) => (
-            <div key={i} style={{ color: line.color, opacity: line.opacity, transition: 'none' }}>
-              {line.text}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // Build code lines for cache-layer
-  const cacheCodeLines = f < dissolveStart
-    ? oldCode.map((text, i) => ({ text, color: RED, opacity: 1 }))
-    : f < typeNewStart
-    ? oldCode.map((text, i) => ({ text, color: RED, opacity: oldLineOpacity(i) }))
-    : newCode.map((text, i) => ({ text, color: GREEN, opacity: newLineOpacity(i) }));
-
-  // Static code for api-gateway
-  const apiCodeLines = [
-    { text: 'handler = sdk.handler({', color: TEXT_DIM, opacity: 1 },
-    { text: '  trigger: "http.request",', color: TEXT_DIM, opacity: 1 },
-    { text: '  match: "/api/v1/*" });', color: TEXT_DIM, opacity: 1 },
-  ];
-
-  // Code for new rate-limiter (types itself — slower for readability)
-  const rateLimiterCode = [
-    { text: 'handler = sdk.handler({', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [0, 15], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
-    { text: '  trigger: "traffic.spike",', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [8, 22], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
-    { text: '  action: "rate_limit" });', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [16, 30], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
-  ];
-
-  const y1 = 180;
+  const gap = 24;
+  const y1 = 140;
   const y2 = y1 + boxH + gap;
   const y3 = y2 + boxH + gap;
+
+  // Spawn position interpolation (starts at y2, moves to y3)
+  const spawnY = interpolate(spawnSpring, [0, 1], [y2, y3], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+  });
 
   return (
     <div style={{
       position: 'relative', width: '100%', height: '100%',
       fontFamily: FONT, backgroundColor: BG,
     }}>
-      {/* Server 1: cache-layer — evolves */}
-      <ServerWithCode
-        y={y1}
-        name="cache-layer"
-        color={srvColor}
-        codeLines={cacheCodeLines}
-        badge={serverRecovered ? 'v2' : evolvingVisible ? 'evolving...' : 'v1'}
-        statusLabel={f < dissolveStart ? 'CrashLoop' : f < typeNewEnd ? 'Evolving' : 'Running'}
-      />
+      {/* ===== SERVER 1: cache-layer — EVOLVES ===== */}
+      <div style={{
+        position: 'absolute',
+        left: centerX - boxW / 2, top: y1,
+        width: boxW, height: boxH,
+        border: `2px solid ${srvColor}`,
+        borderRadius: 14,
+        backgroundColor: `${srvColor}08`,
+        overflow: 'hidden',
+        boxShadow: srvColor === GREEN
+          ? `0 0 30px ${GREEN}33`
+          : srvColor === RED
+          ? `0 0 20px ${RED}22`
+          : `0 0 25px ${AMBER}22`,
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 18px', borderBottom: `1px solid ${srvColor}33`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 12, height: 12, borderRadius: 6,
+              backgroundColor: srvColor,
+              boxShadow: `0 0 8px ${srvColor}`,
+              opacity: srvColor === AMBER
+                ? interpolate(frame % 10, [0, 5, 10], [1, 0.3, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
+                : 1,
+            }} />
+            <span style={{ fontSize: 18, color: TEXT, fontWeight: 700, fontFamily: FONT }}>cache-layer</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Version badge */}
+            <span style={{
+              fontSize: 13, fontFamily: FONT, fontWeight: 600,
+              padding: '3px 10px', borderRadius: 6,
+              color: f >= recoveryFrame ? GREEN : f >= dissolveStart ? AMBER : RED,
+              border: `1px solid ${f >= recoveryFrame ? GREEN : f >= dissolveStart ? AMBER : RED}44`,
+              backgroundColor: `${f >= recoveryFrame ? GREEN : f >= dissolveStart ? AMBER : RED}11`,
+            }}>
+              {f >= recoveryFrame ? 'v2' : f >= dissolveStart ? 'evolving...' : 'v1'}
+            </span>
+            <span style={{ fontSize: 14, color: srvColor, fontFamily: FONT, fontWeight: 600 }}>
+              {f < dissolveStart ? 'CrashLoop' : f < typeNewEnd ? 'Evolving' : 'Running'}
+            </span>
+          </div>
+        </div>
 
-      {/* Evolving indicator */}
-      {evolvingVisible && (
+        {/* Analyzing indicator */}
+        {analyzingVisible && (
+          <div style={{
+            padding: '8px 18px', fontSize: 14, color: AMBER, fontFamily: FONT,
+            backgroundColor: `${AMBER}08`,
+          }}>
+            {'\u25D0'} analyzing root cause{analyzeDots}
+          </div>
+        )}
+
+        {/* Code area */}
+        <div style={{ padding: '10px 18px', fontFamily: FONT, fontSize: 15, lineHeight: 1.9 }}>
+          {f < typeNewStart ? (
+            // Old code — with problem highlighting
+            oldCode.map((line, i) => {
+              const highlight = problemHighlight(i);
+              const opacity = f >= dissolveStart ? oldLineOpacity(i) : 1;
+              return (
+                <div key={`old-${i}`} style={{
+                  color: RED,
+                  opacity,
+                  backgroundColor: highlight > 0 ? `${RED}${Math.round(highlight * 20).toString(16).padStart(2, '0')}` : 'transparent',
+                  borderLeft: highlight > 0 ? `3px solid ${RED}` : '3px solid transparent',
+                  paddingLeft: 8,
+                  marginLeft: -11,
+                  textDecoration: f >= dissolveStart + i * 5 ? 'line-through' : 'none',
+                }}>
+                  {line.text}
+                </div>
+              );
+            })
+          ) : (
+            // New code — types in with cyan glow
+            newCode.map((text, i) => {
+              const progress = newLineProgress(i);
+              const chars = Math.floor(progress * text.length);
+              const isTyping = progress > 0 && progress < 1;
+              return (
+                <div key={`new-${i}`} style={{
+                  color: GREEN,
+                  opacity: progress > 0 ? 1 : 0,
+                  borderLeft: `3px solid ${progress > 0 ? GREEN : 'transparent'}`,
+                  paddingLeft: 8,
+                  marginLeft: -11,
+                  textShadow: isTyping ? `0 0 12px ${CYAN}` : 'none',
+                }}>
+                  {text.slice(0, chars)}
+                  {isTyping && <span style={{ color: CYAN, opacity: frame % 8 < 4 ? 1 : 0 }}>{'\u258C'}</span>}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Recovery ripple */}
+      {rippleActive && (
         <div style={{
           position: 'absolute',
-          left: centerX - boxW / 2 - 4,
-          top: y1,
-          width: boxW + 8,
-          height: boxH,
-          borderRadius: 16,
-          border: `2px solid ${AMBER}`,
-          opacity: evolvingOpacity * 0.5,
+          left: centerX - (boxW / 2 + rippleProgress * 40),
+          top: y1 - rippleProgress * 20,
+          width: boxW + rippleProgress * 80,
+          height: boxH + rippleProgress * 40,
+          borderRadius: 20,
+          border: `2px solid ${GREEN}`,
+          opacity: 1 - rippleProgress,
           pointerEvents: 'none',
-          boxShadow: `0 0 30px ${AMBER}44`,
+          boxShadow: `0 0 ${20 + rippleProgress * 30}px ${GREEN}44`,
         }} />
       )}
 
-      {/* Server 2: api-gateway — healthy */}
-      <ServerWithCode
-        y={y2}
-        name="api-gateway"
-        color={srv2Color}
-        codeLines={apiCodeLines}
-        badge="v3"
-        statusLabel="Running"
-      />
+      {/* ===== SERVER 2: api-gateway — healthy ===== */}
+      <div style={{
+        position: 'absolute',
+        left: centerX - boxW / 2, top: y2,
+        width: boxW, height: boxH,
+        border: `2px solid ${GREEN}`,
+        borderRadius: 14,
+        backgroundColor: `${GREEN}08`,
+        overflow: 'hidden',
+        boxShadow: `0 0 15px ${GREEN}15`,
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 18px', borderBottom: `1px solid ${GREEN}33`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: GREEN, boxShadow: `0 0 8px ${GREEN}` }} />
+            <span style={{ fontSize: 18, color: TEXT, fontWeight: 700, fontFamily: FONT }}>api-gateway</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              fontSize: 13, fontFamily: FONT, fontWeight: 600,
+              padding: '3px 10px', borderRadius: 6,
+              color: GREEN, border: `1px solid ${GREEN}44`, backgroundColor: `${GREEN}11`,
+            }}>v3</span>
+            <span style={{ fontSize: 14, color: GREEN, fontFamily: FONT, fontWeight: 600 }}>Running</span>
+          </div>
+        </div>
+        <div style={{ padding: '10px 18px', fontFamily: FONT, fontSize: 15, lineHeight: 1.9, color: TEXT_DIM }}>
+          <div>handler = sdk.handler({'{'}</div>
+          <div style={{ paddingLeft: 16 }}>trigger: &quot;http.request&quot;,</div>
+          <div style={{ paddingLeft: 16 }}>match: &quot;/api/v1/*&quot;</div>
+          <div>{'}'});</div>
+        </div>
+      </div>
 
-      {/* Server 3: rate-limiter — spawns from nothing */}
+      {/* ===== SERVER 3: rate-limiter — SPAWNS from api-gateway ===== */}
       {spawnVisible && (
         <div style={{
+          position: 'absolute',
+          left: centerX - boxW / 2,
+          top: spawnY,
+          width: boxW, height: boxH,
+          border: `2px solid ${CYAN}`,
+          borderRadius: 14,
+          backgroundColor: `${CYAN}08`,
+          overflow: 'hidden',
           opacity: spawnSpring,
-          transform: `scale(${interpolate(spawnSpring, [0, 1], [0.85, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
+          transform: `scale(${interpolate(spawnSpring, [0, 1], [0.7, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
+          boxShadow: `0 0 25px ${CYAN}33`,
         }}>
-          <ServerWithCode
-            y={y3}
-            name="rate-limiter"
-            color={CYAN}
-            codeLines={rateLimiterCode}
-            badge="new"
-            statusLabel="Spawned"
-          />
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 18px', borderBottom: `1px solid ${CYAN}33`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: CYAN, boxShadow: `0 0 8px ${CYAN}` }} />
+              <span style={{ fontSize: 18, color: TEXT, fontWeight: 700, fontFamily: FONT }}>rate-limiter</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{
+                fontSize: 13, fontFamily: FONT, fontWeight: 600,
+                padding: '3px 10px', borderRadius: 6,
+                color: CYAN, border: `1px solid ${CYAN}44`, backgroundColor: `${CYAN}11`,
+              }}>new</span>
+              <span style={{ fontSize: 14, color: CYAN, fontFamily: FONT, fontWeight: 600 }}>Self-assembling</span>
+            </div>
+          </div>
+          {/* Code writing itself from scratch */}
+          <div style={{ padding: '10px 18px', fontFamily: FONT, fontSize: 15, lineHeight: 1.9 }}>
+            {['handler = sdk.handler({', '  trigger: "traffic.spike",', '  limit: 1000,', '  window: "1m"', '});'].map((text, i) => {
+              const lineProgress = interpolate(f - spawnStart, [5 + i * 6, 11 + i * 6], [0, 1], {
+                extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+              });
+              const chars = Math.floor(lineProgress * text.length);
+              const isTyping = lineProgress > 0 && lineProgress < 1;
+              return (
+                <div key={i} style={{
+                  color: CYAN,
+                  opacity: lineProgress > 0 ? 1 : 0,
+                  textShadow: isTyping ? `0 0 12px ${CYAN}` : 'none',
+                }}>
+                  {text.slice(0, chars)}
+                  {isTyping && <span style={{ opacity: frame % 8 < 4 ? 1 : 0 }}>{'\u258C'}</span>}
+                </div>
+              );
+            })}
+          </div>
+          {/* "spawned by" label */}
+          <div style={{
+            padding: '6px 18px', fontSize: 12, color: TEXT_MUTED, fontFamily: FONT,
+            borderTop: `1px solid ${CYAN}22`,
+          }}>
+            spawned by health-monitor {'\u00B7'} traffic pattern shift detected
+          </div>
         </div>
       )}
 
-      {/* Connection lines between servers */}
+      {/* Connection lines */}
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
         <line x1={centerX} y1={y1 + boxH} x2={centerX} y2={y2}
-          stroke={srvColor} strokeWidth={1.5} opacity={0.3} />
-        <line x1={centerX} y1={y2 + boxH} x2={centerX} y2={y3}
-          stroke={CYAN} strokeWidth={1.5} opacity={spawnSpring * 0.3} />
+          stroke={srvColor} strokeWidth={2} opacity={0.4} />
+        {spawnVisible && (
+          <line x1={centerX} y1={y2 + boxH} x2={centerX} y2={spawnY}
+            stroke={CYAN} strokeWidth={2} opacity={spawnSpring * 0.4}
+            strokeDasharray={spawnSpring < 1 ? '6 4' : 'none'} />
+        )}
       </svg>
 
-      {/* P99 metric at bottom */}
-      {f >= typeNewEnd && (
+      {/* P99 metric */}
+      {f >= typeNewEnd - 5 && (
         <div style={{
-          position: 'absolute', bottom: 120, width: '100%', textAlign: 'center',
-          fontSize: 28, color: p99Color, fontWeight: 700, fontFamily: FONT,
-          textShadow: p99 <= 100 ? `0 0 20px ${GREEN}` : 'none',
+          position: 'absolute', bottom: 80, width: '100%', textAlign: 'center',
+          fontSize: 32, color: p99Color, fontWeight: 700, fontFamily: FONT,
+          textShadow: p99 <= 100 ? `0 0 20px ${GREEN}` : `0 0 10px ${RED}`,
         }}>
-          p99: {Math.round(p99)}ms
+          p99: {Math.round(p99)}ms {p99 <= 100 ? '\u2713' : '\u2717'}
         </div>
       )}
     </div>
