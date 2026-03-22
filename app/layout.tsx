@@ -5,12 +5,12 @@ import './fonts.css'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Knot0 - Software that assembles itself.',
-  description: 'Agents that write code, coordinate, and improve over time.',
+  title: 'Knot0 - Software that writes itself.',
+  description: 'Software that writes itself. And never stops.',
   metadataBase: new URL('https://www.knot0.com'),
   openGraph: {
-    title: 'Knot0 - Software that assembles itself.',
-    description: 'Agents that write code, coordinate, and improve over time.',
+    title: 'Knot0 - Software that writes itself.',
+    description: 'Software that writes itself. And never stops.',
     url: 'https://www.knot0.com',
     siteName: 'Knot0',
     locale: 'en_US',
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Knot0 - Software that assembles itself.',
-    description: 'Agents that write code, coordinate, and improve over time.',
+    title: 'Knot0 - Software that writes itself.',
+    description: 'Software that writes itself. And never stops.',
   },
 }
 

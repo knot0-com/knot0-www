@@ -1,6 +1,6 @@
 # Knot0
 
-> Software that assembles itself. Agents that write code, coordinate, and improve over time.
+> Software that writes itself. And never stops.
 
 ## What is Knot0?
 

@@ -12,7 +12,7 @@ export default function Home() {
             name: 'Knot0',
             url: 'https://www.knot0.com',
             logo: 'https://www.knot0.com/logo/knot0-trefoil.svg',
-            description: 'Software that assembles itself. Agents that write code, coordinate, and improve over time.',
+            description: 'Software that writes itself. And never stops.',
             sameAs: ['https://github.com/knot0-com'],
           }),
         }}

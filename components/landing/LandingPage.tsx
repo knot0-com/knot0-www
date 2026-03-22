@@ -50,10 +50,10 @@ export function LandingPage() {
 
               <h1 className="font-mono text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl text-white font-bold mb-4 2xl:mb-6 leading-tight">
                 Software that{' '}
-                <span className="text-amber">assembles itself.</span>
+                <span className="text-amber">writes itself.</span>
               </h1>
               <p className="font-mono text-white-dim text-base md:text-lg 2xl:text-xl max-w-xl 2xl:max-w-2xl mb-8 2xl:mb-10">
-                Agents that write code, coordinate, and improve over time.
+                And never stops.
               </p>
 
               {/* Signup */}
