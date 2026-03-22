@@ -559,343 +559,252 @@ const MontageDiscovery: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
-/** Montage Cut 2-3: Self-evolving servers — code rewrites itself inside. */
-const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
-  const f = frame - CUT2_START;
-
-  // Old code lines (visible inside cache-layer server)
-  const oldCode = [
-    { text: 'cache = new HashMap<>();', problem: true },
-    { text: 'pool = createPool({ max: 10 });', problem: true },
-    { text: 'return cache.get(key);', problem: false },
-  ];
-  // New code lines (replaces old after evolution)
-  const newCode = [
-    'cache = new LinkedHashMap<>(',
-    '  MAX_SESSIONS, 0.75f, true);',
-    'breaker = new CircuitBreaker({',
-    '  threshold: 5, reset: 10_000',
-    '});',
-  ];
-
-  // === PHASE TIMING (120 frames total) ===
-  // Phase 1: Show broken code with problem highlighted (0-14)
-  // Phase 2: Agent analyzes — "analyzing..." indicator (10-20)
-  // Phase 3: Old code gets red highlight + strikethrough, then dissolves (20-40)
-  // Phase 4: New code types in with cyan glow (40-70)
-  // Phase 5: Recovery ripple + v2 badge (65-80)
-  // Phase 6: New actor spawns from api-gateway (85-115)
-  const analyzeStart = 10;
-  const analyzeEnd = 22;
-  const highlightStart = 18;
-  const dissolveStart = 25;
-  const typeNewStart = 42;
-  const typeNewEnd = 70;
-  const recoveryFrame = 68;
-  const spawnStart = 88;
-  const spawnVisible = f >= spawnStart;
-
-  // Problem line highlight (red background glow before dissolve)
-  const problemHighlight = (lineIdx: number) => {
-    if (!oldCode[lineIdx].problem) return 0;
-    return interpolate(f, [highlightStart, highlightStart + 6], [0, 1], {
-      extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-    });
-  };
-
-  // Old code dissolve (opacity 1 → 0, staggered)
-  const oldLineOpacity = (lineIdx: number) => {
-    const start = dissolveStart + lineIdx * 5;
-    return interpolate(f, [start, start + 10], [1, 0], {
-      extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-    });
-  };
-
-  // New code type-in (staggered, with glow)
-  const newLineProgress = (lineIdx: number) => {
-    const start = typeNewStart + lineIdx * 6;
-    return interpolate(f, [start, start + 6], [0, 1], {
-      extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-    });
-  };
-
-  // Server border color
-  const srvColor = f < highlightStart ? RED
-    : f < typeNewEnd ? AMBER
-    : GREEN;
-
-  // Recovery ripple (expanding ring at recoveryFrame)
-  const rippleActive = f >= recoveryFrame && f < recoveryFrame + 20;
-  const rippleProgress = rippleActive ? interpolate(
-    f, [recoveryFrame, recoveryFrame + 20], [0, 1],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-  ) : 0;
-
-  // Analyzing indicator
-  const analyzingVisible = f >= analyzeStart && f < analyzeEnd;
-  const analyzeDots = analyzingVisible ? '.'.repeat(1 + Math.floor((f - analyzeStart) / 4) % 3) : '';
-
-  // Third server spawn — springs from api-gateway position
-  const spawnSpring = spawnVisible ? spring({
-    frame: f - spawnStart, fps, config: { damping: 15, stiffness: 100 },
-  }) : 0;
-
-  // P99 metric
-  const p99 = interpolate(f, [typeNewEnd - 5, typeNewEnd + 20], [340, 38], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
-  const p99Color = p99 > 200 ? RED : p99 > 100 ? AMBER : GREEN;
-
-  // Layout
-  const boxW = 480;
-  const boxH = 260;
-  const centerX = 540;
-  const gap = 24;
-  const y1 = 140;
-  const y2 = y1 + boxH + gap;
-  const y3 = y2 + boxH + gap;
-
-  // Spawn position interpolation (starts at y2, moves to y3)
-  const spawnY = interpolate(spawnSpring, [0, 1], [y2, y3], {
-    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-  });
+/** Robot agent icon — geometric face with eyes that animate by state. */
+const RobotAgent: React.FC<{
+  color: string; state: 'idle' | 'thinking' | 'writing' | 'done' | 'broken';
+  frame: number; size?: number;
+}> = ({ color, state, frame, size = 52 }) => {
+  const eyeBlink = state === 'idle' && frame % 60 > 55;
+  const eyeGlow = state === 'writing' || state === 'thinking';
+  const eyeX = state === 'thinking'
+    ? interpolate(frame % 20, [0, 10, 20], [-2, 2, -2], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
+    : 0;
+  const bodyShake = state === 'broken'
+    ? Math.sin(frame * 3) * 2
+    : 0;
+  const antennaGlow = state === 'writing' || state === 'thinking';
 
   return (
     <div style={{
-      position: 'relative', width: '100%', height: '100%',
-      fontFamily: FONT, backgroundColor: BG,
+      width: size, height: size + 10, position: 'relative',
+      transform: `translateX(${bodyShake}px)`,
     }}>
-      {/* ===== SERVER 1: cache-layer — EVOLVES ===== */}
+      {/* Antenna */}
       <div style={{
-        position: 'absolute',
-        left: centerX - boxW / 2, top: y1,
-        width: boxW, height: boxH,
-        border: `2px solid ${srvColor}`,
-        borderRadius: 14,
-        backgroundColor: `${srvColor}08`,
-        overflow: 'hidden',
-        boxShadow: srvColor === GREEN
-          ? `0 0 30px ${GREEN}33`
-          : srvColor === RED
-          ? `0 0 20px ${RED}22`
-          : `0 0 25px ${AMBER}22`,
+        position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)',
+        width: 4, height: 12, backgroundColor: color, borderRadius: 2,
+        opacity: 0.7,
       }}>
-        {/* Header */}
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 18px', borderBottom: `1px solid ${srvColor}33`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 12, height: 12, borderRadius: 6,
-              backgroundColor: srvColor,
-              boxShadow: `0 0 8px ${srvColor}`,
-              opacity: srvColor === AMBER
-                ? interpolate(frame % 10, [0, 5, 10], [1, 0.3, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
-                : 1,
-            }} />
-            <span style={{ fontSize: 18, color: TEXT, fontWeight: 700, fontFamily: FONT }}>cache-layer</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Version badge */}
-            <span style={{
-              fontSize: 13, fontFamily: FONT, fontWeight: 600,
-              padding: '3px 10px', borderRadius: 6,
-              color: f >= recoveryFrame ? GREEN : f >= dissolveStart ? AMBER : RED,
-              border: `1px solid ${f >= recoveryFrame ? GREEN : f >= dissolveStart ? AMBER : RED}44`,
-              backgroundColor: `${f >= recoveryFrame ? GREEN : f >= dissolveStart ? AMBER : RED}11`,
-            }}>
-              {f >= recoveryFrame ? 'v2' : f >= dissolveStart ? 'evolving...' : 'v1'}
-            </span>
-            <span style={{ fontSize: 14, color: srvColor, fontFamily: FONT, fontWeight: 600 }}>
-              {f < dissolveStart ? 'CrashLoop' : f < typeNewEnd ? 'Evolving' : 'Running'}
-            </span>
-          </div>
-        </div>
+          position: 'absolute', top: -5, left: -3, width: 10, height: 10,
+          borderRadius: 5, backgroundColor: color,
+          boxShadow: antennaGlow ? `0 0 10px ${color}` : 'none',
+          opacity: antennaGlow ? interpolate(frame % 12, [0, 6, 12], [1, 0.4, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0.6,
+        }} />
+      </div>
+      {/* Head/body — rounded square */}
+      <div style={{
+        width: size, height: size,
+        borderRadius: size * 0.25,
+        backgroundColor: `${color}15`,
+        border: `2px solid ${color}`,
+        boxShadow: eyeGlow ? `0 0 16px ${color}44` : `0 0 8px ${color}22`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: size * 0.2,
+        marginTop: 8,
+      }}>
+        {/* Left eye */}
+        <div style={{
+          width: size * 0.18, height: eyeBlink ? 2 : size * 0.18,
+          borderRadius: size * 0.09,
+          backgroundColor: eyeGlow ? '#fff' : color,
+          boxShadow: eyeGlow ? `0 0 8px ${color}` : 'none',
+          transform: `translateX(${eyeX}px)`,
+        }} />
+        {/* Right eye */}
+        <div style={{
+          width: size * 0.18, height: eyeBlink ? 2 : size * 0.18,
+          borderRadius: size * 0.09,
+          backgroundColor: eyeGlow ? '#fff' : color,
+          boxShadow: eyeGlow ? `0 0 8px ${color}` : 'none',
+          transform: `translateX(${eyeX}px)`,
+        }} />
+      </div>
+    </div>
+  );
+};
 
-        {/* Analyzing indicator */}
-        {analyzingVisible && (
-          <div style={{
-            padding: '8px 18px', fontSize: 14, color: AMBER, fontFamily: FONT,
-            backgroundColor: `${AMBER}08`,
+/** Montage Cut 2-3: Robot agents own and rewrite their code. */
+const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
+  const f = frame - CUT2_START;
+
+  // === PHASE TIMING (120 frames) ===
+  const analyzeStart = 8;
+  const analyzeEnd = 22;
+  const dissolveStart = 22;
+  const typeNewStart = 38;
+  const typeNewEnd = 68;
+  const recoveryFrame = 66;
+  const spawnStart = 85;
+  const spawnVisible = f >= spawnStart;
+
+  // Old code dissolve
+  const oldLineOpacity = (i: number) => interpolate(f, [dissolveStart + i * 5, dissolveStart + i * 5 + 10], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  // New code type-in
+  const newLineProgress = (i: number) => interpolate(f, [typeNewStart + i * 6, typeNewStart + i * 6 + 6], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+
+  const srvColor = f < dissolveStart ? RED : f < typeNewEnd ? AMBER : GREEN;
+  const agent1State = f < analyzeStart ? 'broken' : f < dissolveStart ? 'thinking' : f < typeNewEnd ? 'writing' : 'done';
+  const agent2State = 'idle' as const;
+  const agent3State: 'idle' | 'thinking' | 'writing' | 'done' | 'broken' = !spawnVisible ? 'idle' : f < spawnStart + 20 ? 'writing' : 'done';
+
+  const spawnSpring = spawnVisible ? spring({ frame: f - spawnStart, fps, config: { damping: 15, stiffness: 100 } }) : 0;
+  const p99 = interpolate(f, [typeNewEnd - 5, typeNewEnd + 20], [340, 38], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const p99Color = p99 > 200 ? RED : p99 > 100 ? AMBER : GREEN;
+
+  // Recovery ripple
+  const rippleActive = f >= recoveryFrame && f < recoveryFrame + 20;
+  const rippleP = rippleActive ? interpolate(f, [recoveryFrame, recoveryFrame + 20], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0;
+
+  // Layout: robot on left, code block on right
+  const rowH = 200;
+  const gap = 20;
+  const robotX = 60;
+  const codeX = 160;
+  const codeW = 850;
+  const y1 = 150;
+  const y2 = y1 + rowH + gap;
+  const y3 = y2 + rowH + gap;
+
+  const oldCode = ['cache = new HashMap<>();', 'pool = createPool({ max: 10 });', 'return cache.get(key);'];
+  const newCode = ['cache = new LinkedHashMap<>(', '  MAX_SESSIONS, 0.75f, true);', 'breaker = new CircuitBreaker({', '  threshold: 5, reset: 10_000', '});'];
+  const spawnCode = ['handler = sdk.handler({', '  trigger: "traffic.spike",', '  limit: 1000, window: "1m"', '});'];
+
+  const CodeBlock: React.FC<{
+    lines: { text: string; color: string; opacity: number; strike?: boolean; bgTint?: string }[];
+    borderColor: string; title: string; badge: string; badgeColor: string;
+  }> = ({ lines, borderColor, title, badge, badgeColor }) => (
+    <div style={{
+      width: codeW, height: rowH, border: `2px solid ${borderColor}`,
+      borderRadius: 12, backgroundColor: `${borderColor}08`, overflow: 'hidden',
+      boxShadow: `0 0 15px ${borderColor}22`,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '8px 14px', borderBottom: `1px solid ${borderColor}33`, fontSize: 14,
+      }}>
+        <span style={{ color: TEXT, fontWeight: 700, fontFamily: FONT }}>{title}</span>
+        <span style={{
+          fontSize: 12, fontFamily: FONT, fontWeight: 600,
+          padding: '2px 8px', borderRadius: 5,
+          color: badgeColor, border: `1px solid ${badgeColor}44`, backgroundColor: `${badgeColor}11`,
+        }}>{badge}</span>
+      </div>
+      <div style={{ padding: '8px 14px', fontFamily: FONT, fontSize: 14, lineHeight: 1.8 }}>
+        {lines.map((l, i) => (
+          <div key={i} style={{
+            color: l.color, opacity: l.opacity,
+            textDecoration: l.strike ? 'line-through' : 'none',
+            backgroundColor: l.bgTint || 'transparent',
+            borderLeft: l.bgTint ? `3px solid ${l.color}` : '3px solid transparent',
+            paddingLeft: 6, marginLeft: -9,
+            textShadow: l.opacity > 0 && l.opacity < 1 && l.color === GREEN ? `0 0 10px ${CYAN}` : 'none',
           }}>
-            {'\u25D0'} analyzing root cause{analyzeDots}
+            {l.text}
           </div>
-        )}
+        ))}
+      </div>
+    </div>
+  );
 
-        {/* Code area */}
-        <div style={{ padding: '10px 18px', fontFamily: FONT, fontSize: 15, lineHeight: 1.9 }}>
-          {f < typeNewStart ? (
-            // Old code — with problem highlighting
-            oldCode.map((line, i) => {
-              const highlight = problemHighlight(i);
-              const opacity = f >= dissolveStart ? oldLineOpacity(i) : 1;
-              return (
-                <div key={`old-${i}`} style={{
-                  color: RED,
-                  opacity,
-                  backgroundColor: highlight > 0 ? `${RED}${Math.round(highlight * 20).toString(16).padStart(2, '0')}` : 'transparent',
-                  borderLeft: highlight > 0 ? `3px solid ${RED}` : '3px solid transparent',
-                  paddingLeft: 8,
-                  marginLeft: -11,
-                  textDecoration: f >= dissolveStart + i * 5 ? 'line-through' : 'none',
-                }}>
-                  {line.text}
-                </div>
-              );
-            })
-          ) : (
-            // New code — types in with cyan glow
-            newCode.map((text, i) => {
-              const progress = newLineProgress(i);
-              const chars = Math.floor(progress * text.length);
-              const isTyping = progress > 0 && progress < 1;
-              return (
-                <div key={`new-${i}`} style={{
-                  color: GREEN,
-                  opacity: progress > 0 ? 1 : 0,
-                  borderLeft: `3px solid ${progress > 0 ? GREEN : 'transparent'}`,
-                  paddingLeft: 8,
-                  marginLeft: -11,
-                  textShadow: isTyping ? `0 0 12px ${CYAN}` : 'none',
-                }}>
-                  {text.slice(0, chars)}
-                  {isTyping && <span style={{ color: CYAN, opacity: frame % 8 < 4 ? 1 : 0 }}>{'\u258C'}</span>}
-                </div>
-              );
-            })
-          )}
-        </div>
+  // Build cache-layer code lines
+  const cacheLines = f < typeNewStart
+    ? oldCode.map((text, i) => ({
+        text, color: RED, opacity: f >= dissolveStart ? oldLineOpacity(i) : 1,
+        strike: f >= dissolveStart + i * 5,
+        bgTint: f >= analyzeStart && f < dissolveStart && i < 2 ? `${RED}15` : undefined,
+      }))
+    : newCode.map((text, i) => {
+        const prog = newLineProgress(i);
+        const chars = Math.floor(prog * text.length);
+        return {
+          text: text.slice(0, chars) + (prog > 0 && prog < 1 ? '\u258C' : ''),
+          color: GREEN, opacity: prog > 0 ? 1 : 0,
+        };
+      });
+
+  const apiLines = [
+    { text: 'handler = sdk.handler({', color: TEXT_DIM, opacity: 1 },
+    { text: '  trigger: "http.request",', color: TEXT_DIM, opacity: 1 },
+    { text: '  match: "/api/v1/*" });', color: TEXT_DIM, opacity: 1 },
+  ];
+
+  const spawnLines = spawnCode.map((text, i) => {
+    const prog = interpolate(f - spawnStart, [5 + i * 7, 12 + i * 7], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+    const chars = Math.floor(prog * text.length);
+    return {
+      text: text.slice(0, chars) + (prog > 0 && prog < 1 ? '\u258C' : ''),
+      color: CYAN, opacity: prog > 0 ? 1 : 0,
+    };
+  });
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: FONT, backgroundColor: BG }}>
+
+      {/* ===== ROW 1: cache-layer agent + code ===== */}
+      <div style={{ position: 'absolute', left: robotX, top: y1 + (rowH - 62) / 2 }}>
+        <RobotAgent color={srvColor} state={agent1State} frame={frame} size={52} />
+      </div>
+      <div style={{ position: 'absolute', left: codeX, top: y1 }}>
+        <CodeBlock
+          lines={cacheLines}
+          borderColor={srvColor}
+          title="cache-layer"
+          badge={f >= recoveryFrame ? 'v2' : f >= dissolveStart ? 'evolving' : 'v1'}
+          badgeColor={f >= recoveryFrame ? GREEN : f >= dissolveStart ? AMBER : RED}
+        />
       </div>
 
-      {/* Recovery ripple */}
+      {/* Thinking bubble for agent 1 */}
+      {f >= analyzeStart && f < dissolveStart && (
+        <div style={{
+          position: 'absolute', left: robotX + 56, top: y1 + 10,
+          fontSize: 12, color: AMBER, fontFamily: FONT,
+          backgroundColor: `${AMBER}15`, padding: '4px 10px', borderRadius: 8,
+          border: `1px solid ${AMBER}33`,
+        }}>
+          {f < analyzeEnd ? `analyzing${ '.'.repeat(1 + Math.floor((f - analyzeStart) / 4) % 3)}` : 'rewriting...'}
+        </div>
+      )}
+
+      {/* Recovery ripple around row 1 */}
       {rippleActive && (
         <div style={{
-          position: 'absolute',
-          left: centerX - (boxW / 2 + rippleProgress * 40),
-          top: y1 - rippleProgress * 20,
-          width: boxW + rippleProgress * 80,
-          height: boxH + rippleProgress * 40,
-          borderRadius: 20,
-          border: `2px solid ${GREEN}`,
-          opacity: 1 - rippleProgress,
-          pointerEvents: 'none',
-          boxShadow: `0 0 ${20 + rippleProgress * 30}px ${GREEN}44`,
+          position: 'absolute', left: codeX - rippleP * 20, top: y1 - rippleP * 10,
+          width: codeW + rippleP * 40, height: rowH + rippleP * 20,
+          borderRadius: 16, border: `2px solid ${GREEN}`, opacity: 1 - rippleP,
+          pointerEvents: 'none', boxShadow: `0 0 ${20 + rippleP * 25}px ${GREEN}44`,
         }} />
       )}
 
-      {/* ===== SERVER 2: api-gateway — healthy ===== */}
-      <div style={{
-        position: 'absolute',
-        left: centerX - boxW / 2, top: y2,
-        width: boxW, height: boxH,
-        border: `2px solid ${GREEN}`,
-        borderRadius: 14,
-        backgroundColor: `${GREEN}08`,
-        overflow: 'hidden',
-        boxShadow: `0 0 15px ${GREEN}15`,
-      }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 18px', borderBottom: `1px solid ${GREEN}33`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: GREEN, boxShadow: `0 0 8px ${GREEN}` }} />
-            <span style={{ fontSize: 18, color: TEXT, fontWeight: 700, fontFamily: FONT }}>api-gateway</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              fontSize: 13, fontFamily: FONT, fontWeight: 600,
-              padding: '3px 10px', borderRadius: 6,
-              color: GREEN, border: `1px solid ${GREEN}44`, backgroundColor: `${GREEN}11`,
-            }}>v3</span>
-            <span style={{ fontSize: 14, color: GREEN, fontFamily: FONT, fontWeight: 600 }}>Running</span>
-          </div>
-        </div>
-        <div style={{ padding: '10px 18px', fontFamily: FONT, fontSize: 15, lineHeight: 1.9, color: TEXT_DIM }}>
-          <div>handler = sdk.handler({'{'}</div>
-          <div style={{ paddingLeft: 16 }}>trigger: &quot;http.request&quot;,</div>
-          <div style={{ paddingLeft: 16 }}>match: &quot;/api/v1/*&quot;</div>
-          <div>{'}'});</div>
-        </div>
+      {/* ===== ROW 2: api-gateway agent + code ===== */}
+      <div style={{ position: 'absolute', left: robotX, top: y2 + (rowH - 62) / 2 }}>
+        <RobotAgent color={GREEN} state={agent2State} frame={frame} size={52} />
+      </div>
+      <div style={{ position: 'absolute', left: codeX, top: y2 }}>
+        <CodeBlock lines={apiLines} borderColor={GREEN} title="api-gateway" badge="v3" badgeColor={GREEN} />
       </div>
 
-      {/* ===== SERVER 3: rate-limiter — SPAWNS from api-gateway ===== */}
+      {/* ===== ROW 3: rate-limiter — new agent SPAWNS ===== */}
       {spawnVisible && (
-        <div style={{
-          position: 'absolute',
-          left: centerX - boxW / 2,
-          top: spawnY,
-          width: boxW, height: boxH,
-          border: `2px solid ${CYAN}`,
-          borderRadius: 14,
-          backgroundColor: `${CYAN}08`,
-          overflow: 'hidden',
-          opacity: spawnSpring,
-          transform: `scale(${interpolate(spawnSpring, [0, 1], [0.7, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
-          boxShadow: `0 0 25px ${CYAN}33`,
-        }}>
+        <>
           <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 18px', borderBottom: `1px solid ${CYAN}33`,
+            position: 'absolute', left: robotX, top: y3 + (rowH - 62) / 2,
+            opacity: spawnSpring,
+            transform: `scale(${interpolate(spawnSpring, [0, 1], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: CYAN, boxShadow: `0 0 8px ${CYAN}` }} />
-              <span style={{ fontSize: 18, color: TEXT, fontWeight: 700, fontFamily: FONT }}>rate-limiter</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                fontSize: 13, fontFamily: FONT, fontWeight: 600,
-                padding: '3px 10px', borderRadius: 6,
-                color: CYAN, border: `1px solid ${CYAN}44`, backgroundColor: `${CYAN}11`,
-              }}>new</span>
-              <span style={{ fontSize: 14, color: CYAN, fontFamily: FONT, fontWeight: 600 }}>Self-assembling</span>
-            </div>
+            <RobotAgent color={CYAN} state={agent3State} frame={frame} size={52} />
           </div>
-          {/* Code writing itself from scratch */}
-          <div style={{ padding: '10px 18px', fontFamily: FONT, fontSize: 15, lineHeight: 1.9 }}>
-            {['handler = sdk.handler({', '  trigger: "traffic.spike",', '  limit: 1000,', '  window: "1m"', '});'].map((text, i) => {
-              const lineProgress = interpolate(f - spawnStart, [5 + i * 6, 11 + i * 6], [0, 1], {
-                extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
-              });
-              const chars = Math.floor(lineProgress * text.length);
-              const isTyping = lineProgress > 0 && lineProgress < 1;
-              return (
-                <div key={i} style={{
-                  color: CYAN,
-                  opacity: lineProgress > 0 ? 1 : 0,
-                  textShadow: isTyping ? `0 0 12px ${CYAN}` : 'none',
-                }}>
-                  {text.slice(0, chars)}
-                  {isTyping && <span style={{ opacity: frame % 8 < 4 ? 1 : 0 }}>{'\u258C'}</span>}
-                </div>
-              );
-            })}
-          </div>
-          {/* "spawned by" label */}
           <div style={{
-            padding: '6px 18px', fontSize: 12, color: TEXT_MUTED, fontFamily: FONT,
-            borderTop: `1px solid ${CYAN}22`,
+            position: 'absolute', left: codeX, top: y3,
+            opacity: spawnSpring,
+            transform: `scale(${interpolate(spawnSpring, [0, 1], [0.8, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
           }}>
-            spawned by health-monitor {'\u00B7'} traffic pattern shift detected
+            <CodeBlock lines={spawnLines} borderColor={CYAN} title="rate-limiter" badge="new" badgeColor={CYAN} />
           </div>
-        </div>
+        </>
       )}
 
-      {/* Connection lines */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-        <line x1={centerX} y1={y1 + boxH} x2={centerX} y2={y2}
-          stroke={srvColor} strokeWidth={2} opacity={0.4} />
-        {spawnVisible && (
-          <line x1={centerX} y1={y2 + boxH} x2={centerX} y2={spawnY}
-            stroke={CYAN} strokeWidth={2} opacity={spawnSpring * 0.4}
-            strokeDasharray={spawnSpring < 1 ? '6 4' : 'none'} />
-        )}
-      </svg>
-
       {/* ===== BIG TEXT CALLOUTS ===== */}
-
-      {/* Scene title */}
       {f < spawnStart && (
         <div style={{
           position: 'absolute', top: 50, width: '100%', textAlign: 'center',
@@ -905,51 +814,29 @@ const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
           NO HUMAN INVOLVED
         </div>
       )}
-
-      {/* "SELF-EVOLVING" callout — appears when code starts rewriting */}
       {f >= typeNewStart - 5 && f < recoveryFrame + 10 && (
         <div style={{
           position: 'absolute', top: 70, width: '100%', textAlign: 'center',
-          opacity: interpolate(f,
-            [typeNewStart - 5, typeNewStart + 5, recoveryFrame, recoveryFrame + 10],
-            [0, 1, 1, 0],
-            { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-          ),
+          opacity: interpolate(f, [typeNewStart - 5, typeNewStart + 5, recoveryFrame, recoveryFrame + 10], [0, 1, 1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
         }}>
-          <span style={{
-            fontSize: 42, fontWeight: 700, fontFamily: FONT,
-            color: AMBER,
-            textShadow: `0 0 30px ${AMBER}66, 0 0 60px ${AMBER}33`,
-            letterSpacing: 4,
-          }}>
+          <span style={{ fontSize: 42, fontWeight: 700, fontFamily: FONT, color: AMBER, textShadow: `0 0 30px ${AMBER}66`, letterSpacing: 4 }}>
             SELF-EVOLVING
           </span>
-          <div style={{
-            fontSize: 18, color: TEXT_DIM, fontFamily: FONT, marginTop: 8,
-          }}>
-            code rewrites itself inside the server
+          <div style={{ fontSize: 16, color: TEXT_DIM, fontFamily: FONT, marginTop: 6 }}>
+            the agent rewrites its own code
           </div>
         </div>
       )}
-
-      {/* "SELF-ASSEMBLING" callout — appears when new actor spawns */}
       {f >= spawnStart && (
         <div style={{
           position: 'absolute', top: 50, width: '100%', textAlign: 'center',
           opacity: spring({ frame: f - spawnStart, fps, config: { damping: 200 } }),
         }}>
-          <span style={{
-            fontSize: 42, fontWeight: 700, fontFamily: FONT,
-            color: CYAN,
-            textShadow: `0 0 30px ${CYAN}66, 0 0 60px ${CYAN}33`,
-            letterSpacing: 4,
-          }}>
+          <span style={{ fontSize: 42, fontWeight: 700, fontFamily: FONT, color: CYAN, textShadow: `0 0 30px ${CYAN}66`, letterSpacing: 4 }}>
             SELF-ASSEMBLING
           </span>
-          <div style={{
-            fontSize: 18, color: TEXT_DIM, fontFamily: FONT, marginTop: 8,
-          }}>
-            new actor writes itself from scratch
+          <div style={{ fontSize: 16, color: TEXT_DIM, fontFamily: FONT, marginTop: 6 }}>
+            a new agent writes itself from scratch
           </div>
         </div>
       )}
