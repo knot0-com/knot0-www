@@ -116,8 +116,8 @@ const PhoneLockScreen: React.FC<{
     : 'MTTR: 47 seconds';
 
   // Phone frame dimensions
-  const PHONE_W = 380;
-  const PHONE_H = 820;
+  const PHONE_W = 640;
+  const PHONE_H = 1380;
 
   return (
     <AbsoluteFill
@@ -147,12 +147,12 @@ const PhoneLockScreen: React.FC<{
         <div
           style={{
             position: 'absolute',
-            top: 12,
+            top: 20,
             left: '50%',
             transform: 'translateX(-50%)',
-            width: 120,
-            height: 34,
-            borderRadius: 17,
+            width: 200,
+            height: 56,
+            borderRadius: 28,
             backgroundColor: '#000',
             zIndex: 20,
           }}
@@ -163,7 +163,7 @@ const PhoneLockScreen: React.FC<{
           style={{
             position: 'absolute',
             inset: 0,
-            borderRadius: 45,
+            borderRadius: 44,
             overflow: 'hidden',
             background: 'linear-gradient(180deg, #0c0c1a 0%, #0a0a0a 100%)',
             display: 'flex',
@@ -176,20 +176,20 @@ const PhoneLockScreen: React.FC<{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '14px 28px 0 28px',
-              height: 20,
+              padding: '24px 44px 0 44px',
+              height: 34,
               fontFamily: SF_FONT,
-              fontSize: 14,
+              fontSize: 22,
               fontWeight: 600,
               color: '#fff',
               zIndex: 10,
             }}
           >
             {/* Left: carrier */}
-            <span style={{ width: 80 }}>T-Mobile</span>
+            <span style={{ width: 130 }}>T-Mobile</span>
 
             {/* Center: status bar time (small) */}
-            <span style={{ fontSize: 14, fontWeight: 600 }}>
+            <span style={{ fontSize: 22, fontWeight: 600 }}>
               {time.replace(' AM', '').replace(' PM', '')}
             </span>
 
@@ -200,22 +200,22 @@ const PhoneLockScreen: React.FC<{
                 alignItems: 'center',
                 gap: 6,
                 justifyContent: 'flex-end',
-                width: 80,
+                width: 130,
               }}
             >
               {/* Wifi bars — 3 ascending rectangles */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1.5 }}>
-                <div style={{ width: 3, height: 5, borderRadius: 1, backgroundColor: '#fff' }} />
-                <div style={{ width: 3, height: 8, borderRadius: 1, backgroundColor: '#fff' }} />
-                <div style={{ width: 3, height: 11, borderRadius: 1, backgroundColor: '#fff' }} />
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2.5 }}>
+                <div style={{ width: 5, height: 8, borderRadius: 1.5, backgroundColor: '#fff' }} />
+                <div style={{ width: 5, height: 13, borderRadius: 1.5, backgroundColor: '#fff' }} />
+                <div style={{ width: 5, height: 18, borderRadius: 1.5, backgroundColor: '#fff' }} />
               </div>
               {/* Battery icon */}
               <div
                 style={{
-                  width: 24,
-                  height: 11,
-                  borderRadius: 3,
-                  border: '1.5px solid #fff',
+                  width: 38,
+                  height: 18,
+                  borderRadius: 4,
+                  border: '2px solid #fff',
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
@@ -260,7 +260,7 @@ const PhoneLockScreen: React.FC<{
           >
             <div
               style={{
-                fontSize: 76,
+                fontSize: 128,
                 fontWeight: 300,
                 color: '#ffffff',
                 letterSpacing: 2,
@@ -272,9 +272,9 @@ const PhoneLockScreen: React.FC<{
             </div>
             <div
               style={{
-                fontSize: 18,
+                fontSize: 28,
                 color: TEXT_DIM,
-                marginTop: 10,
+                marginTop: 16,
                 fontFamily: SF_FONT,
                 fontWeight: 400,
               }}
@@ -289,13 +289,13 @@ const PhoneLockScreen: React.FC<{
               style={{
                 position: 'absolute',
                 top: '56%',
-                left: 16,
-                right: 16,
+                left: 26,
+                right: 26,
                 transform: `translateY(${notifY}px)`,
                 opacity: notifSpring,
                 background: 'rgba(30, 30, 30, 0.85)',
-                borderRadius: 16,
-                padding: '12px 14px',
+                borderRadius: 24,
+                padding: '20px 22px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 4,
@@ -313,14 +313,14 @@ const PhoneLockScreen: React.FC<{
                   {/* App icon */}
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
+                      width: 56,
+                      height: 56,
+                      borderRadius: 13,
                       backgroundColor: appIconBg,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 16,
+                      fontSize: 24,
                       fontWeight: 700,
                       color: '#fff',
                       fontFamily: SF_FONT,
@@ -331,7 +331,7 @@ const PhoneLockScreen: React.FC<{
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span
                       style={{
-                        fontSize: 11,
+                        fontSize: 17,
                         fontWeight: 600,
                         color: TEXT_MUTED,
                         letterSpacing: 0.5,
@@ -357,7 +357,7 @@ const PhoneLockScreen: React.FC<{
               {/* Title */}
               <div
                 style={{
-                  fontSize: 15,
+                  fontSize: 24,
                   fontWeight: 600,
                   color: '#fff',
                   fontFamily: SF_FONT,
@@ -371,7 +371,7 @@ const PhoneLockScreen: React.FC<{
               {/* Body */}
               <div
                 style={{
-                  fontSize: 14,
+                  fontSize: 22,
                   color: TEXT_DIM,
                   fontFamily: SF_FONT,
                   lineHeight: 1.4,
@@ -386,38 +386,38 @@ const PhoneLockScreen: React.FC<{
           <div
             style={{
               position: 'absolute',
-              bottom: 40,
+              bottom: 64,
               left: 0,
               right: 0,
               display: 'flex',
               justifyContent: 'space-between',
-              padding: '0 36px',
+              padding: '0 56px',
             }}
           >
             <div
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
+                width: 72,
+                height: 72,
+                borderRadius: 36,
                 backgroundColor: 'rgba(255,255,255,0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 18,
+                fontSize: 28,
               }}
             >
               {'\uD83D\uDD26'}
             </div>
             <div
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
+                width: 72,
+                height: 72,
+                borderRadius: 36,
                 backgroundColor: 'rgba(255,255,255,0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 18,
+                fontSize: 28,
               }}
             >
               {'\uD83D\uDCF7'}
