@@ -26,23 +26,23 @@ import {
 // Beat boundaries (frames)
 // ---------------------------------------------------------------------------
 
-const BEAT1_START = 0; // The Page (0-59)
-const BEAT1_END = 59;
-const BEAT2_START = 60; // Text Overlay (60-119)
-const BEAT2_END = 119;
-const BEAT3_START = 120; // Dashboard Montage (120-239)
-const BEAT3_END = 239;
-const BEAT4_START = 240; // Phone Returns (240-359)
-const BEAT4_END = 359;
-const BEAT5_START = 360; // Brand (360-449)
+const BEAT1_START = 0; // The Page (0-49)
+const BEAT1_END = 49;
+const BEAT2_START = 50; // Text Overlay (50-89)
+const BEAT2_END = 89;
+const BEAT3_START = 90; // Dashboard Montage (90-359)
+const BEAT3_END = 359;
+const BEAT4_START = 360; // Phone Returns (360-449)
+const BEAT4_END = 449;
+const BEAT5_START = 450; // Brand (450-539)
 
 // Montage cut boundaries
-const CUT1_START = 120;
-const CUT1_END = 149;
-const CUT2_START = 150;
-const CUT2_END = 209; // merged: agent writes fix + sends to servers + pods recover
-const CUT4_START = 210;
-const CUT4_END = 239;
+const CUT1_START = 90;  // Discovery: 90 frames (3s)
+const CUT1_END = 179;
+const CUT2_START = 180; // Self-evolving: 120 frames (4s)
+const CUT2_END = 299;
+const CUT4_START = 300; // Resolved: 60 frames (2s)
+const CUT4_END = 359;
 
 // Cross-fade duration between montage cuts
 const XFADE = 5;
@@ -506,10 +506,10 @@ const MontageDiscovery: React.FC<{ frame: number }> = ({ frame }) => {
   const localFrame = frame - CUT1_START;
 
   const lines = [
-    { src: '[Prometheus]', text: 'memory > 2GB', delay: 0 },
-    { src: '[Kubernetes]', text: '2 pods CrashLoop', delay: 6 },
-    { src: '[Git Blame]', text: '"Add session caching"', delay: 12 },
-    { src: '[Heap Dump]', text: 'Unbounded HashMap', delay: 18 },
+    { src: '[Prometheus]', text: 'memory > 2GB, spiking since 14:32', delay: 10 },
+    { src: '[Kubernetes]', text: '2 pods in CrashLoopBackOff', delay: 25 },
+    { src: '[Git Blame]', text: 'Last change: "Add session caching"', delay: 40 },
+    { src: '[Heap Dump]', text: 'Unbounded HashMap in SessionCache', delay: 55 },
   ];
 
   return (
@@ -526,15 +526,15 @@ const MontageDiscovery: React.FC<{ frame: number }> = ({ frame }) => {
     >
       <div
         style={{
-          fontSize: 18,
+          fontSize: 24,
           color: TEXT_MUTED,
-          marginBottom: 12,
+          marginBottom: 16,
           letterSpacing: 2,
         }}
       >
         KNOT0 AGENT
       </div>
-      <div style={{ fontSize: 20, color: CYAN, marginBottom: 24 }}>
+      <div style={{ fontSize: 26, color: CYAN, marginBottom: 32 }}>
         {'\u25D0'} Discovering context...
       </div>
       {lines.map((l, i) => {
@@ -543,10 +543,11 @@ const MontageDiscovery: React.FC<{ frame: number }> = ({ frame }) => {
           <div
             key={i}
             style={{
-              fontSize: 18,
+              fontSize: 22,
               color: TEXT,
-              marginBottom: 10,
+              marginBottom: 16,
               opacity: visible ? 1 : 0,
+              transform: visible ? 'translateX(0)' : 'translateX(-20px)',
             }}
           >
             <span style={{ color: CYAN }}>{'\u2192'} {l.src}</span>{' '}
@@ -575,28 +576,28 @@ const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
     'breaker = new CircuitBreaker();',
   ];
 
-  // Phase timing
+  // Phase timing (120 frames total)
   const showOldCode = f >= 0;
-  const dissolveStart = 8;
-  const dissolveEnd = 16;
-  const typeNewStart = 16;
-  const typeNewEnd = 30;
-  const serverRecovered = f >= 28;
-  const spawnStart = 36;
+  const dissolveStart = 15;   // old code starts dissolving
+  const dissolveEnd = 35;
+  const typeNewStart = 35;    // new code starts typing
+  const typeNewEnd = 65;      // new code done
+  const serverRecovered = f >= 60;
+  const spawnStart = 80;      // new actor spawns
   const spawnVisible = f >= spawnStart;
 
   // Old code dissolve (opacity 1 → 0, each line staggered)
   const oldLineOpacity = (lineIdx: number) => {
-    const start = dissolveStart + lineIdx * 2;
-    return interpolate(f, [start, start + 6], [1, 0], {
+    const start = dissolveStart + lineIdx * 5;
+    return interpolate(f, [start, start + 12], [1, 0], {
       extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
     });
   };
 
   // New code type-in (each line staggered)
   const newLineOpacity = (lineIdx: number) => {
-    const start = typeNewStart + lineIdx * 4;
-    return interpolate(f, [start, start + 4], [0, 1], {
+    const start = typeNewStart + lineIdx * 8;
+    return interpolate(f, [start, start + 8], [0, 1], {
       extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
     });
   };
@@ -622,7 +623,7 @@ const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
   }) : 0;
 
   // P99 metric
-  const p99 = interpolate(f, [typeNewEnd, typeNewEnd + 15], [340, 38], {
+  const p99 = interpolate(f, [typeNewEnd, typeNewEnd + 25], [340, 38], {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
   const p99Color = p99 > 200 ? RED : p99 > 100 ? AMBER : GREEN;
@@ -706,11 +707,11 @@ const MontageEvolve: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
     { text: '  match: "/api/v1/*" });', color: TEXT_DIM, opacity: 1 },
   ];
 
-  // Code for new rate-limiter (types itself)
+  // Code for new rate-limiter (types itself — slower for readability)
   const rateLimiterCode = [
-    { text: 'handler = sdk.handler({', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [0, 8], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
-    { text: '  trigger: "traffic.spike",', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [4, 12], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
-    { text: '  action: "rate_limit" });', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [8, 16], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
+    { text: 'handler = sdk.handler({', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [0, 15], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
+    { text: '  trigger: "traffic.spike",', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [8, 22], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
+    { text: '  action: "rate_limit" });', color: CYAN, opacity: spawnVisible ? interpolate(f - spawnStart, [16, 30], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0 },
   ];
 
   const y1 = 180;
