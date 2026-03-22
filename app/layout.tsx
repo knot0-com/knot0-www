@@ -5,12 +5,12 @@ import './fonts.css'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Knot0 - Run AI agents anywhere.',
-  description: 'Orchestration, execution, and governance for production AI.',
+  title: 'Knot0 - Software that assembles itself.',
+  description: 'Agents that write code, coordinate, and improve over time.',
   metadataBase: new URL('https://www.knot0.com'),
   openGraph: {
-    title: 'Knot0 - Run AI agents anywhere.',
-    description: 'Orchestration, execution, and governance for production AI.',
+    title: 'Knot0 - Software that assembles itself.',
+    description: 'Agents that write code, coordinate, and improve over time.',
     url: 'https://www.knot0.com',
     siteName: 'Knot0',
     locale: 'en_US',
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Knot0 - Run AI agents anywhere.',
-    description: 'Orchestration, execution, and governance for production AI.',
+    title: 'Knot0 - Software that assembles itself.',
+    description: 'Agents that write code, coordinate, and improve over time.',
   },
 }
 

@@ -1,19 +1,36 @@
 # Knot0
 
-> Run AI agents anywhere. Orchestration, execution, and governance for production AI.
+> Software that assembles itself. Agents that write code, coordinate, and improve over time.
 
 ## What is Knot0?
 
-Knot0 is an agent orchestration platform for production workloads. It provides execution runtime, governance, and observability for AI agents across any infrastructure.
+Knot0 is a runtime for self-assembling software. You define a goal. Agents write the code, form teams, and ship to production.
 
 ## Key Capabilities
 
-- Agent orchestration and lifecycle management
-- Multi-provider LLM support
-- Built-in governance and safety controls
-- Real-time observability and monitoring
-- Durable execution with suspend/resume
-- Event-driven agent communication
+- **Self-assembly**: Agents write their own handler code from a goal — no boilerplate, no scaffolding.
+- **Team formation**: Agents spawn and organize teams dynamically based on task complexity.
+- **Coordination**: Events, messaging, and shared memory let agents collaborate without brittle integrations.
+- **Code-native reasoning**: Agents reason by writing and executing code in a sandboxed REPL, not just generating text.
+- **Self-improvement**: Agents evaluate their own performance and evolve their behavior over time.
+- **Durable execution**: Agents persist across restarts and resume where they left off.
+- **Flexible deployment**: Run agents locally, remotely, or in isolated sandboxes — same API everywhere.
+
+## How It Works
+
+1. Define agents with a goal
+2. Agents self-assemble — they write their own code based on the goal
+3. Agents coordinate via events, messages, and shared memory
+4. Agents improve over time through self-evaluation and evolution
+5. Everything is observable — runs, decisions, and outputs are tracked
+
+## Use Cases
+
+- SRE incident triage and automated runbook execution
+- Multi-source data collection and analysis pipelines
+- Autonomous research with structured findings
+- Fleet management and monitoring
+- Any workflow where agents need to coordinate, persist, and improve
 
 ## Open Source Tools
 

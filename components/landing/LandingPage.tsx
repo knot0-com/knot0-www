@@ -49,11 +49,11 @@ export function LandingPage() {
               <div className="w-12 2xl:w-16 h-px bg-amber mb-8 2xl:mb-10" />
 
               <h1 className="font-mono text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl text-white font-bold mb-4 2xl:mb-6 leading-tight">
-                Run AI agents{' '}
-                <span className="text-amber">anywhere.</span>
+                Software that{' '}
+                <span className="text-amber">assembles itself.</span>
               </h1>
               <p className="font-mono text-white-dim text-base md:text-lg 2xl:text-xl max-w-xl 2xl:max-w-2xl">
-                Orchestration, execution, and governance for production AI.
+                Agents that write code, coordinate, and improve over time.
               </p>
             </div>
           </FadeIn>

@@ -12,7 +12,7 @@ export default function Home() {
             name: 'Knot0',
             url: 'https://www.knot0.com',
             logo: 'https://www.knot0.com/logo/knot0-trefoil.svg',
-            description: 'Orchestration, execution, and governance for production AI.',
+            description: 'Software that assembles itself. Agents that write code, coordinate, and improve over time.',
             sameAs: ['https://github.com/knot0-com'],
           }),
         }}
