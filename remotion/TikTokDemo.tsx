@@ -40,9 +40,7 @@ const BEAT5_START = 360; // Brand (360-449)
 const CUT1_START = 120;
 const CUT1_END = 149;
 const CUT2_START = 150;
-const CUT2_END = 179;
-const CUT3_START = 180;
-const CUT3_END = 209;
+const CUT2_END = 209; // merged: agent writes fix + sends to servers + pods recover
 const CUT4_START = 210;
 const CUT4_END = 239;
 
@@ -560,131 +558,217 @@ const MontageDiscovery: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
-/** Montage Cut 2: Code diff. */
-const MontageDiff: React.FC<{ frame: number }> = ({ frame }) => {
+/** Montage Cut 2: Agent generates fix + sends to servers. */
+const MontageFixAndDeploy: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
   const localFrame = frame - CUT2_START;
 
-  const diffLines = [
-    { text: '- cache = new HashMap<>();', color: RED },
-    { text: '+ cache = new LinkedHashMap<>(', color: GREEN },
-    { text: '+   MAX_SESSIONS, 0.75f, true', color: GREEN },
-    { text: '+ ) {', color: GREEN },
-    { text: '+   removeEldestEntry(e) {', color: GREEN },
-    { text: '+     return size() > 1000;', color: GREEN },
-    { text: '+   }', color: GREEN },
-    { text: '+ };', color: GREEN },
-  ];
+  // Agent node appears
+  const agentSpring = spring({ frame: localFrame, fps, config: { damping: 200 } });
 
-  return (
-    <div
-      style={{
-        padding: 60,
-        fontFamily: FONT,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        height: '100%',
-        boxSizing: 'border-box',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 16,
-          color: TEXT_MUTED,
-          marginBottom: 20,
-          letterSpacing: 1,
-        }}
-      >
-        fix-memory-leak.patch
-      </div>
-      {diffLines.map((l, i) => {
-        const visible = localFrame >= i * 2;
-        return (
-          <div
-            key={i}
-            style={{
-              fontSize: 17,
-              color: l.color,
-              marginBottom: 4,
-              opacity: visible ? 1 : 0,
-              lineHeight: 1.6,
-            }}
-          >
-            {l.text}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-/** Montage Cut 3: Deploying. */
-const MontageDeploy: React.FC<{ frame: number }> = ({ frame }) => {
-  const localFrame = frame - CUT3_START;
-
-  const prog1 = interpolate(localFrame, [0, 20], [0, 100], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-  const prog2 = interpolate(localFrame, [5, 25], [0, 85], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
+  // Code materializes around agent (frames 5-15)
+  const codeVisible = interpolate(localFrame, [5, 15], [0, 1], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 
-  // p99 metric countdown
-  const p99 = interpolate(localFrame, [0, 25], [340, 38], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
+  // Patch flies to servers (frames 16-25)
+  const patchProgress1 = interpolate(localFrame, [16, 24], [0, 1], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
-  const p99Color =
-    p99 > 200 ? RED : p99 > 100 ? AMBER : GREEN;
+  const patchProgress2 = interpolate(localFrame, [18, 26], [0, 1], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+  });
 
-  const renderBar = (label: string, pct: number, done: boolean) => {
-    const filled = Math.round(pct / (100 / 12));
-    const bar =
-      '\u2588'.repeat(filled) + '\u2591'.repeat(12 - filled);
-    return (
-      <div style={{ fontSize: 17, color: TEXT, marginBottom: 8 }}>
-        {label}{' '}
-        <span style={{ color: done ? GREEN : AMBER }}>{'\u25CF'}</span>{' '}
-        <span style={{ color: done ? GREEN : AMBER }}>{bar}</span>{' '}
-        <span style={{ color: TEXT_DIM }}>
-          {Math.round(pct)}%
-        </span>
-        {done && (
-          <span style={{ color: GREEN, marginLeft: 8 }}>{'\u2713'}</span>
-        )}
-      </div>
-    );
+  // Extend into cut 3 time range for server recovery
+  const extFrame = frame - CUT2_START;
+
+  // Server pod status (frames 24-40 — extends into cut 3)
+  const pod1Status = extFrame < 24 ? 'crash' : extFrame < 32 ? 'patching' : 'running';
+  const pod2Status = extFrame < 26 ? 'crash' : extFrame < 35 ? 'patching' : 'running';
+
+  // p99 recovery (frames 28-45)
+  const p99 = interpolate(extFrame, [28, 45], [340, 38], {
+    extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
+  });
+  const p99Color = p99 > 200 ? RED : p99 > 100 ? AMBER : GREEN;
+
+  const podColor = (status: string) =>
+    status === 'crash' ? RED : status === 'patching' ? AMBER : GREEN;
+  const podLabel = (status: string) =>
+    status === 'crash' ? 'CrashLoop' : status === 'patching' ? 'Restarting...' : 'Running';
+  const podDot = (status: string, f: number) => {
+    const pulse = status === 'patching'
+      ? interpolate(f % 10, [0, 5, 10], [1, 0.3, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
+      : 1;
+    return pulse;
   };
 
+  // Positions
+  const agentX = 540; // center
+  const agentY = 340;
+  const srv1X = 260;
+  const srv1Y = 800;
+  const srv2X = 820;
+  const srv2Y = 800;
+
+  // Patch position (interpolate from agent to server)
+  const patch1X = interpolate(patchProgress1, [0, 1], [agentX, srv1X], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const patch1Y = interpolate(patchProgress1, [0, 1], [agentY + 60, srv1Y - 40], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const patch2X = interpolate(patchProgress2, [0, 1], [agentX, srv2X], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const patch2Y = interpolate(patchProgress2, [0, 1], [agentY + 60, srv2Y - 40], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+
+  const ServerBox: React.FC<{ x: number; y: number; name: string; status: string }> = ({ x, y, name, status }) => (
+    <div style={{
+      position: 'absolute',
+      left: x - 120,
+      top: y - 60,
+      width: 240,
+      height: 160,
+      border: `2px solid ${podColor(status)}`,
+      borderRadius: 12,
+      backgroundColor: `${podColor(status)}11`,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    }}>
+      <div style={{ fontSize: 13, color: TEXT_MUTED, letterSpacing: 1 }}>KUBERNETES</div>
+      <div style={{ fontSize: 18, color: TEXT, fontWeight: 600 }}>{name}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{
+          width: 10, height: 10, borderRadius: 5,
+          backgroundColor: podColor(status),
+          opacity: podDot(status, frame),
+        }} />
+        <span style={{ fontSize: 15, color: podColor(status) }}>{podLabel(status)}</span>
+      </div>
+    </div>
+  );
+
   return (
-    <div
-      style={{
-        padding: 60,
-        fontFamily: FONT,
+    <div style={{
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      fontFamily: FONT,
+      backgroundColor: BG,
+    }}>
+      {/* Agent node */}
+      <div style={{
+        position: 'absolute',
+        left: agentX - 80,
+        top: agentY - 50,
+        width: 160,
+        height: 100,
+        border: `2px solid ${AMBER}`,
+        borderRadius: 12,
+        backgroundColor: `${AMBER}15`,
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
-        height: '100%',
-        boxSizing: 'border-box',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 18,
-          color: TEXT_MUTED,
-          marginBottom: 24,
-          letterSpacing: 2,
-        }}
-      >
-        DEPLOYING
+        gap: 4,
+        opacity: agentSpring,
+        transform: `scale(${interpolate(agentSpring, [0, 1], [0.8, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
+        boxShadow: `0 0 30px ${AMBER}33`,
+      }}>
+        <div style={{ fontSize: 13, color: TEXT_MUTED, letterSpacing: 1 }}>KNOT0 AGENT</div>
+        <div style={{ fontSize: 16, color: AMBER, fontWeight: 600 }}>
+          {localFrame < 15 ? 'Writing fix...' : 'Deploying'}
+        </div>
       </div>
-      {renderBar('prod-k8s-01', prog1, prog1 >= 100)}
-      {renderBar('prod-k8s-02', prog2, prog2 >= 100)}
-      <div style={{ marginTop: 24, fontSize: 20, color: p99Color }}>
-        p99: {Math.round(p99)}ms
-      </div>
+
+      {/* Code materializing around agent */}
+      {codeVisible > 0 && codeVisible < 1 && (
+        <div style={{
+          position: 'absolute',
+          left: agentX - 140,
+          top: agentY + 60,
+          opacity: codeVisible,
+          fontSize: 11,
+          color: CYAN,
+          lineHeight: 1.5,
+          width: 280,
+          textAlign: 'center',
+        }}>
+          <span style={{ color: GREEN }}>+LRU cache</span>{' '}
+          <span style={{ color: GREEN }}>+circuit breaker</span>
+        </div>
+      )}
+
+      {/* Connection lines (SVG) */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+        {/* Agent to Server 1 */}
+        <line
+          x1={agentX} y1={agentY + 50}
+          x2={srv1X} y2={srv1Y - 60}
+          stroke={patchProgress1 >= 1 ? podColor(pod1Status) : TEXT_MUTED}
+          strokeWidth={2}
+          strokeDasharray={patchProgress1 > 0 ? 'none' : '6 4'}
+          opacity={localFrame >= 16 ? 0.6 : 0.15}
+        />
+        {/* Agent to Server 2 */}
+        <line
+          x1={agentX} y1={agentY + 50}
+          x2={srv2X} y2={srv2Y - 60}
+          stroke={patchProgress2 >= 1 ? podColor(pod2Status) : TEXT_MUTED}
+          strokeWidth={2}
+          strokeDasharray={patchProgress2 > 0 ? 'none' : '6 4'}
+          opacity={localFrame >= 18 ? 0.6 : 0.15}
+        />
+      </svg>
+
+      {/* Flying patches */}
+      {patchProgress1 > 0 && patchProgress1 < 1 && (
+        <div style={{
+          position: 'absolute',
+          left: patch1X - 24,
+          top: patch1Y - 12,
+          width: 48, height: 24,
+          borderRadius: 6,
+          backgroundColor: CYAN,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, color: BG, fontWeight: 700,
+          boxShadow: `0 0 16px ${CYAN}`,
+        }}>
+          PATCH
+        </div>
+      )}
+      {patchProgress2 > 0 && patchProgress2 < 1 && (
+        <div style={{
+          position: 'absolute',
+          left: patch2X - 24,
+          top: patch2Y - 12,
+          width: 48, height: 24,
+          borderRadius: 6,
+          backgroundColor: CYAN,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, color: BG, fontWeight: 700,
+          boxShadow: `0 0 16px ${CYAN}`,
+        }}>
+          PATCH
+        </div>
+      )}
+
+      {/* Server boxes */}
+      <ServerBox x={srv1X} y={srv1Y} name="prod-k8s-01" status={pod1Status} />
+      <ServerBox x={srv2X} y={srv2Y} name="prod-k8s-02" status={pod2Status} />
+
+      {/* P99 metric */}
+      {extFrame >= 28 && (
+        <div style={{
+          position: 'absolute',
+          bottom: 160,
+          width: '100%',
+          textAlign: 'center',
+          fontSize: 28,
+          color: p99Color,
+          fontWeight: 700,
+          textShadow: p99 <= 100 ? `0 0 20px ${GREEN}` : 'none',
+        }}>
+          p99: {Math.round(p99)}ms
+        </div>
+      )}
     </div>
   );
 };
@@ -894,7 +978,7 @@ export const TikTokDemo: React.FC = () => {
             <MontageDiscovery frame={frame} />
           </div>
 
-          {/* Cut 2: Diff */}
+          {/* Cut 2-3: Agent writes fix + deploys to servers */}
           <div
             style={{
               position: 'absolute',
@@ -902,18 +986,7 @@ export const TikTokDemo: React.FC = () => {
               opacity: montageCutOpacity(CUT2_START, CUT2_END),
             }}
           >
-            <MontageDiff frame={frame} />
-          </div>
-
-          {/* Cut 3: Deploy */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: montageCutOpacity(CUT3_START, CUT3_END),
-            }}
-          >
-            <MontageDeploy frame={frame} />
+            <MontageFixAndDeploy frame={frame} fps={fps} />
           </div>
 
           {/* Cut 4: Resolved */}
