@@ -7,10 +7,12 @@ import {
   AbsoluteFill,
   useCurrentFrame,
   interpolate,
+  spring,
+  useVideoConfig,
 } from 'remotion';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
-import { BG, FONT, AMBER, GREEN, TEXT, TEXT_MUTED, typewriter } from './theme';
+import { BG, BORDER, FONT, AMBER, GREEN, TEXT, TEXT_DIM, TEXT_MUTED, typewriter } from './theme';
 import { Terminal } from './components/Terminal';
 import { ConfigReveal } from './components/ConfigReveal';
 import { CodeFlash } from './components/CodeFlash';
@@ -20,7 +22,110 @@ import { EvolutionLog } from './components/EvolutionLog';
 import { Branding } from './components/Branding';
 
 // ---------------------------------------------------------------------------
-// Beat 2 inner component — assembly terminal + code flash overlay
+// Runner status section — FullDemo Runner interface pattern
+// ---------------------------------------------------------------------------
+
+interface RunnerNode {
+  name: string;
+  platform: string;
+  status: 'connected' | 'executing';
+}
+
+const RUNNERS: RunnerNode[] = [
+  { name: 'prod-k8s-01', platform: 'Kubernetes', status: 'connected' },
+  { name: 'staging-k8s', platform: 'Kubernetes', status: 'connected' },
+];
+
+const RunnerStatus: React.FC<{ frame: number; startFrame: number }> = ({ frame, startFrame }) => {
+  const { fps } = useVideoConfig();
+  const localFrame = frame - startFrame;
+
+  if (localFrame < 0) return null;
+
+  // Each runner springs in sequentially
+  const runner0Spring = spring({
+    frame: Math.max(0, localFrame),
+    fps,
+    config: { damping: 200 },
+  });
+
+  const runner1Spring = spring({
+    frame: Math.max(0, localFrame - 8),
+    fps,
+    config: { damping: 200 },
+  });
+
+  const springs = [runner0Spring, runner1Spring];
+
+  // Pulsing dot for connected status
+  const pulseOpacity = interpolate(
+    frame % 24,
+    [0, 12, 24],
+    [1, 0.4, 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
+  );
+
+  // Overall section entrance
+  const sectionEntrance = spring({
+    frame: Math.max(0, localFrame),
+    fps,
+    config: { damping: 200 },
+  });
+
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        paddingTop: 12,
+        borderTop: `1px solid ${BORDER}`,
+        opacity: sectionEntrance,
+      }}
+    >
+      <div style={{ color: TEXT_DIM, marginBottom: 8, fontSize: 12 }}>RUNNERS</div>
+      {RUNNERS.map((runner, i) => {
+        const statusColor = runner.status === 'connected' ? GREEN : AMBER;
+        const translateX = interpolate(springs[i], [0, 1], [-16, 0]);
+
+        return (
+          <div
+            key={runner.name}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              opacity: springs[i],
+              transform: `translateX(${translateX}px)`,
+              lineHeight: 2,
+            }}
+          >
+            <span style={{ color: TEXT, width: 140, display: 'inline-block' }}>
+              {'  '}{runner.name}
+            </span>
+            <span style={{ color: TEXT_MUTED, width: 100, display: 'inline-block' }}>
+              {runner.platform}
+            </span>
+            <span
+              style={{
+                color: statusColor,
+                opacity: pulseOpacity,
+                textShadow: `0 0 6px ${statusColor}`,
+                fontSize: 12,
+              }}
+            >
+              ●
+            </span>
+            <span style={{ color: statusColor, fontWeight: 700 }}>
+              {runner.status}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Beat 2 inner component — assembly terminal + code flash overlay + runners
 // ---------------------------------------------------------------------------
 
 const ASSEMBLY_TEXT = `$ knot0 deploy --goal knot0.yaml
@@ -55,6 +160,9 @@ const Beat2: React.FC = () => {
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
   );
 
+  // Runner section appears after "Starting..." has been typed (~frame 90)
+  const runnerStartFrame = 90;
+
   return (
     <>
       <AbsoluteFill
@@ -76,6 +184,7 @@ const Beat2: React.FC = () => {
             {colorized}
             <span style={{ color: AMBER, opacity: cursorOpacity }}>{'\u258C'}</span>
           </span>
+          <RunnerStatus frame={frame} startFrame={runnerStartFrame} />
         </Terminal>
       </AbsoluteFill>
 
@@ -146,7 +255,7 @@ export const SelfAssemblyDemo: React.FC = () => {
           timing={linearTiming({ durationInFrames: 15 })}
         />
 
-        {/* Beat 2: Assembly terminal + code flash */}
+        {/* Beat 2: Assembly terminal + code flash + runners */}
         <TransitionSeries.Sequence durationInFrames={195}>
           <Beat2 />
         </TransitionSeries.Sequence>

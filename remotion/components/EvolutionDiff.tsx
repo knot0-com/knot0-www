@@ -1,46 +1,133 @@
 // Input: Remotion useCurrentFrame/interpolate/spring/useVideoConfig, theme colors, Terminal component
-// Output: Beat 5 — split-view diff + validation panels with spring entrances from left/right
+// Output: Beat 5 — split-view diff + validation panels with FullDemo-style diff coloring
 // Position: Fifth beat (the money shot) in SelfAssemblyDemo composition
 
 import React from 'react';
 import { useCurrentFrame, AbsoluteFill, interpolate, spring, useVideoConfig } from 'remotion';
 import { Terminal } from './Terminal';
-import { FONT, TEXT, TEXT_DIM, TEXT_MUTED, GREEN, RED, AMBER, fadeIn } from '../theme';
+import { FONT, TEXT, TEXT_DIM, TEXT_MUTED, GREEN, RED, AMBER, CYAN, fadeIn } from '../theme';
 
-// Diff lines (left panel)
-const DIFF_LINES: Array<{ text: string; color: string }> = [
-  { text: '// cache-layer/handler.ts  v1 \u2192 v2', color: TEXT_DIM },
-  { text: '', color: TEXT },
-  { text: '- const pool = createPool({ max: 10 });', color: RED },
-  { text: '+ const pool = createPool({', color: GREEN },
-  { text: '+   max: 50,', color: GREEN },
-  { text: '+   idleTimeout: 30_000', color: GREEN },
-  { text: '+ });', color: GREEN },
-  { text: '+', color: GREEN },
-  { text: '+ const breaker = new CircuitBreaker({', color: GREEN },
-  { text: '+   threshold: 5,', color: GREEN },
-  { text: '+   resetTimeout: 10_000', color: GREEN },
-  { text: '+ });', color: GREEN },
+// Purple for keywords in code context
+const PURPLE = '#c084fc';
+
+// ---------------------------------------------------------------------------
+// FullDemo-style diff/patch highlighter
+// ---------------------------------------------------------------------------
+
+interface DiffLine {
+  text: string;
+  type: 'header' | 'meta' | 'add' | 'remove' | 'hunk' | 'context' | 'blank';
+}
+
+const DIFF_LINES: DiffLine[] = [
+  { text: '// cache-layer/handler.ts  v1 → v2', type: 'header' },
+  { text: '', type: 'blank' },
+  { text: '@@ -4,2 +4,8 @@ export default sdk.handler({', type: 'hunk' },
+  { text: '- const pool = createPool({ max: 10 });', type: 'remove' },
+  { text: '+ const pool = createPool({', type: 'add' },
+  { text: '+   max: 50,', type: 'add' },
+  { text: '+   idleTimeout: 30_000', type: 'add' },
+  { text: '+ });', type: 'add' },
+  { text: '+', type: 'add' },
+  { text: '+ const breaker = new CircuitBreaker({', type: 'add' },
+  { text: '+   threshold: 5,', type: 'add' },
+  { text: '+   resetTimeout: 10_000', type: 'add' },
+  { text: '+ });', type: 'add' },
 ];
 
-// Validation lines (right panel)
-const VALIDATION_LINES: Array<{ label: string; value: string; valueColor: string }> = [
-  { label: 'evolution:', value: ' cache-layer v1 \u2192 v2', valueColor: TEXT },
+function renderDiffLine(line: DiffLine, idx: number): React.ReactNode {
+  switch (line.type) {
+    case 'header':
+      return <span style={{ color: TEXT_DIM, fontStyle: 'italic' }}>{line.text}</span>;
+    case 'hunk':
+      return <span style={{ color: CYAN }}>{line.text}</span>;
+    case 'add':
+      return (
+        <span>
+          <span
+            style={{
+              backgroundColor: 'rgba(57, 255, 20, 0.08)',
+              display: 'inline',
+            }}
+          >
+            <span style={{ color: GREEN }}>{line.text}</span>
+          </span>
+        </span>
+      );
+    case 'remove':
+      return (
+        <span>
+          <span
+            style={{
+              backgroundColor: 'rgba(255, 68, 68, 0.08)',
+              display: 'inline',
+            }}
+          >
+            <span style={{ color: RED }}>{line.text}</span>
+          </span>
+        </span>
+      );
+    case 'blank':
+      return <span>{'\u00A0'}</span>;
+    default:
+      return <span style={{ color: TEXT }}>{line.text}</span>;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Validation lines (right panel) — with FullDemo-style SLO progress bar
+// ---------------------------------------------------------------------------
+
+interface ValLine {
+  label: string;
+  value: string;
+  valueColor: string;
+  badge?: 'pass' | 'fail' | 'promoted';
+  progressBar?: { value: number; max: number; color: string };
+}
+
+const VALIDATION_LINES: ValLine[] = [
+  { label: 'evolution:', value: ' cache-layer v1 → v2', valueColor: TEXT },
   { label: '', value: '', valueColor: TEXT },
   { label: 'change:', value: '    pool scaling + circuit breaker', valueColor: TEXT },
   { label: '', value: '', valueColor: TEXT },
-  { label: 'testing:', value: '   shadow traffic... passed', valueColor: TEXT },
-  { label: '', value: '           p99: 340ms \u2192 38ms', valueColor: TEXT },
+  { label: 'testing:', value: '   shadow traffic...', valueColor: TEXT },
+  { label: '  p99:', value: '     ', valueColor: TEXT, progressBar: { value: 38, max: 400, color: GREEN } },
+  { label: '  was:', value: '     ', valueColor: TEXT, progressBar: { value: 340, max: 400, color: RED } },
   { label: '', value: '', valueColor: TEXT },
-  { label: 'SLO:', value: '       38ms < 100ms  ', valueColor: TEXT },
+  { label: 'SLO:', value: '       38ms < 100ms  ', valueColor: TEXT, badge: 'pass' },
   { label: '', value: '', valueColor: TEXT },
-  { label: 'promoted:', value: '  v2 now active', valueColor: AMBER },
+  { label: 'promoted:', value: '  v2 now active', valueColor: AMBER, badge: 'promoted' },
 ];
 
 const FRAMES_PER_DIFF_LINE = 4;
 const DIFF_TOTAL_FRAMES = DIFF_LINES.length * FRAMES_PER_DIFF_LINE;
 const VALIDATION_START = Math.floor(DIFF_TOTAL_FRAMES * 0.6);
 const FRAMES_PER_VAL_LINE = 6;
+
+// ---------------------------------------------------------------------------
+// SLO progress bar helper — FullDemo pattern: [████████░░░░] 42ms
+// ---------------------------------------------------------------------------
+
+function SLOBar({ value, max, color }: { value: number; max: number; color: string }) {
+  const totalBlocks = 16;
+  const filled = Math.round((value / max) * totalBlocks);
+  const empty = totalBlocks - filled;
+  const bar = '█'.repeat(filled) + '░'.repeat(empty);
+
+  return (
+    <span>
+      <span style={{ color: TEXT_MUTED }}>[</span>
+      <span style={{ color }}>{bar}</span>
+      <span style={{ color: TEXT_MUTED }}>]</span>
+      <span style={{ color, fontWeight: 700 }}> {value}ms</span>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export const EvolutionDiff: React.FC = () => {
   const frame = useCurrentFrame();
@@ -54,7 +141,7 @@ export const EvolutionDiff: React.FC = () => {
   });
 
   const rightEntrance = spring({
-    frame: Math.max(0, frame - 5), // slight delay for right panel
+    frame: Math.max(0, frame - 5),
     fps,
     config: { damping: 200 },
   });
@@ -101,22 +188,27 @@ export const EvolutionDiff: React.FC = () => {
         opacity: leftEntrance,
         transform: `translateX(${leftTranslateX}px)`,
       }}>
-        <Terminal title="diff" style={{ height: 460 }}>
+        <Terminal title="diff — cache-layer/handler.ts" style={{ height: 480 }}>
           <div style={{ fontSize: 14, lineHeight: 1.8 }}>
             {DIFF_LINES.slice(0, visibleDiffLines).map((line, i) => (
               <div
                 key={i}
                 style={{
-                  color: line.color,
                   opacity: interpolate(
                     frame,
                     [i * FRAMES_PER_DIFF_LINE, i * FRAMES_PER_DIFF_LINE + 4],
                     [0, 1],
                     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
                   ),
+                  paddingLeft: 4,
+                  borderLeft: line.type === 'add'
+                    ? `2px solid ${GREEN}`
+                    : line.type === 'remove'
+                      ? `2px solid ${RED}`
+                      : '2px solid transparent',
                 }}
               >
-                {line.text || '\u00A0'}
+                {renderDiffLine(line, i)}
               </div>
             ))}
             {visibleDiffLines < DIFF_LINES.length && (
@@ -133,24 +225,50 @@ export const EvolutionDiff: React.FC = () => {
         opacity: rightEntrance,
         transform: `translateX(${rightTranslateX}px)`,
       }}>
-        <Terminal title="validation" style={{ height: 460 }}>
+        <Terminal title="validation" style={{ height: 480 }}>
           <div style={{ fontSize: 14, lineHeight: 1.8 }}>
             {VALIDATION_LINES.slice(0, visibleValLines).map((line, i) => {
               const lineFrame = VALIDATION_START + i * FRAMES_PER_VAL_LINE;
               const lineOpacity = fadeIn(frame, lineFrame, 6);
 
-              // SLO line gets a checkmark
-              const isSloLine = line.label === 'SLO:';
-              const isPromoted = line.label === 'promoted:';
+              const isSloPass = line.badge === 'pass';
+              const isPromoted = line.badge === 'promoted';
 
               return (
                 <div key={i} style={{ opacity: lineOpacity }}>
                   {line.label && (
                     <span style={{ color: TEXT_MUTED }}>{line.label}</span>
                   )}
-                  <span style={{ color: line.valueColor }}>{line.value}</span>
-                  {isSloLine && <span style={{ color: GREEN }}>{'\u2713'}</span>}
-                  {isPromoted && null}
+                  {line.progressBar ? (
+                    <SLOBar
+                      value={line.progressBar.value}
+                      max={line.progressBar.max}
+                      color={line.progressBar.color}
+                    />
+                  ) : (
+                    <span style={{ color: line.valueColor }}>{line.value}</span>
+                  )}
+                  {isSloPass && (
+                    <span
+                      style={{
+                        color: GREEN,
+                        textShadow: `0 0 6px ${GREEN}`,
+                      }}
+                    >
+                      {'  ✓ PASS'}
+                    </span>
+                  )}
+                  {isPromoted && (
+                    <span
+                      style={{
+                        color: AMBER,
+                        textShadow: `0 0 6px ${AMBER}`,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {'  ●'}
+                    </span>
+                  )}
                 </div>
               );
             })}
