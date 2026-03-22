@@ -1,307 +1,477 @@
-// Input: All beat components, @remotion/transitions TransitionSeries, Remotion AbsoluteFill/interpolate/useCurrentFrame
-// Output: Main 900-frame demo composition sequencing 7 beats with cross-fade transitions
+// Input: All dashboard components, Remotion AbsoluteFill/useCurrentFrame/interpolate/spring/useVideoConfig
+// Output: Main 900-frame demo composition orchestrating 7 beats of on-call engineer POV dashboard
 // Position: Primary composition for Knot0Demo and IncidentResponse
 
 import React from 'react';
+import { AbsoluteFill, useCurrentFrame, interpolate, useVideoConfig } from 'remotion';
 import {
-  AbsoluteFill,
-  useCurrentFrame,
-  interpolate,
-  spring,
-  useVideoConfig,
-} from 'remotion';
-import { TransitionSeries, linearTiming } from '@remotion/transitions';
-import { fade } from '@remotion/transitions/fade';
-import { BG, BORDER, FONT, AMBER, GREEN, TEXT, TEXT_DIM, TEXT_MUTED, typewriter } from './theme';
-import { Terminal } from './components/Terminal';
-import { ConfigReveal } from './components/ConfigReveal';
-import { CodeFlash } from './components/CodeFlash';
-import { MetricsDashboard } from './components/MetricsDashboard';
-import { EvolutionDiff } from './components/EvolutionDiff';
+  BG,
+  BORDER,
+  FONT,
+  AMBER,
+  CYAN,
+  GREEN,
+  RED,
+  TEXT,
+  TEXT_DIM,
+  TEXT_MUTED,
+} from './theme';
+import { BrowserChrome } from './components/BrowserChrome';
+import { StatusBar } from './components/StatusBar';
+import { ServiceCards } from './components/ServiceCards';
+import type { ServiceInfo } from './components/ServiceCards';
+import { AgentFeed } from './components/AgentFeed';
+import type { FeedItem } from './components/AgentFeed';
+import { PagerDutyAlert } from './components/PagerDutyAlert';
+import { DiffView } from './components/DiffView';
+import { RunnerCards } from './components/RunnerCards';
+import type { RunnerInfo } from './components/RunnerCards';
 import { EvolutionLog } from './components/EvolutionLog';
-import { Branding } from './components/Branding';
+import { SLOBar } from './components/SLOBar';
+import { BrandCard } from './components/BrandCard';
 
 // ---------------------------------------------------------------------------
-// Runner status section — FullDemo Runner interface pattern
+// Constants: beat boundaries
 // ---------------------------------------------------------------------------
 
-interface RunnerNode {
-  name: string;
-  platform: string;
-  status: 'connected' | 'executing';
-}
+const BEAT1_START = 0;
+const BEAT1_END = 89;
+const BEAT2_START = 90;
+const BEAT2_END = 179;
+const BEAT3_START = 180;
+const BEAT3_END = 299;
+const BEAT4_START = 300;
+const BEAT4_END = 449;
+const BEAT5_START = 450;
+const BEAT5_END = 599;
+const BEAT6_START = 600;
+const BEAT6_END = 749;
+const BEAT7_START = 750;
 
-const RUNNERS: RunnerNode[] = [
-  { name: 'prod-k8s-01', platform: 'Kubernetes', status: 'connected' },
-  { name: 'staging-k8s', platform: 'Kubernetes', status: 'connected' },
+// ---------------------------------------------------------------------------
+// Feed items data
+// ---------------------------------------------------------------------------
+
+const FEED_ITEMS: FeedItem[] = [
+  // Beat 3: Knot0 responds
+  {
+    icon: '\u276F',
+    color: AMBER,
+    lines: ['knot0 ~'],
+  },
+  {
+    icon: '\u26A0',
+    color: RED,
+    lines: ['INCIDENT ALERT', '  PagerDuty: cache-layer OOMKilled in production'],
+    lineColors: [RED, TEXT_DIM],
+  },
+  {
+    icon: '\u25D0',
+    color: CYAN,
+    lines: ['Discovering context...'],
+  },
+  {
+    icon: ' ',
+    color: CYAN,
+    lines: ['\u2192 [Prometheus] memory_usage > 2GB, spiking since 14:32'],
+    lineColors: [TEXT],
+  },
+  {
+    icon: ' ',
+    color: CYAN,
+    lines: ['\u2192 [Kubernetes] 2 pods in CrashLoopBackOff'],
+    lineColors: [TEXT],
+  },
+  {
+    icon: ' ',
+    color: CYAN,
+    lines: ['\u2192 [Git Blame] Last change: "Add session caching"'],
+    lineColors: [TEXT],
+  },
+  {
+    icon: ' ',
+    color: CYAN,
+    lines: ['\u2192 [Heap Dump] Unbounded HashMap in SessionCache'],
+    lineColors: [TEXT],
+  },
+  // Beat 4: Writing fix
+  {
+    icon: '\u270E',
+    color: CYAN,
+    lines: ['Writing fix...'],
+  },
+  // Beat 4: Approval prompt
+  {
+    icon: '?',
+    color: AMBER,
+    lines: [
+      'Apply hotfix to payment-svc',
+      '  1 file ready \u00B7 rollback available',
+      '  [Y] approve    [N] deny',
+    ],
+    lineColors: [AMBER, TEXT_DIM, TEXT_MUTED],
+  },
+  // Beat 4: Auto-approved
+  {
+    icon: '\u25B6',
+    color: AMBER,
+    lines: ['Deploying to 2 runners...'],
+  },
+  // Beat 6: Resolved
+  {
+    icon: '\u2713',
+    color: GREEN,
+    lines: [
+      'Incident resolved',
+      '  2 pods patched \u00B7 0 downtime \u00B7 MTTR: 47 seconds',
+    ],
+    lineColors: [GREEN, TEXT_MUTED],
+  },
 ];
 
-const RunnerStatus: React.FC<{ frame: number; startFrame: number }> = ({ frame, startFrame }) => {
-  const { fps } = useVideoConfig();
-  const localFrame = frame - startFrame;
-
-  if (localFrame < 0) return null;
-
-  // Each runner springs in sequentially
-  const runner0Spring = spring({
-    frame: Math.max(0, localFrame),
-    fps,
-    config: { damping: 200 },
-  });
-
-  const runner1Spring = spring({
-    frame: Math.max(0, localFrame - 8),
-    fps,
-    config: { damping: 200 },
-  });
-
-  const springs = [runner0Spring, runner1Spring];
-
-  // Pulsing dot for connected status
-  const pulseOpacity = interpolate(
-    frame % 24,
-    [0, 12, 24],
-    [1, 0.4, 1],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
-
-  // Overall section entrance
-  const sectionEntrance = spring({
-    frame: Math.max(0, localFrame),
-    fps,
-    config: { damping: 200 },
-  });
-
-  return (
-    <div
-      style={{
-        marginTop: 16,
-        paddingTop: 12,
-        borderTop: `1px solid ${BORDER}`,
-        opacity: sectionEntrance,
-      }}
-    >
-      <div style={{ color: TEXT_DIM, marginBottom: 8, fontSize: 12 }}>RUNNERS</div>
-      {RUNNERS.map((runner, i) => {
-        const statusColor = runner.status === 'connected' ? GREEN : AMBER;
-        const translateX = interpolate(springs[i], [0, 1], [-16, 0]);
-
-        return (
-          <div
-            key={runner.name}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              opacity: springs[i],
-              transform: `translateX(${translateX}px)`,
-              lineHeight: 2,
-            }}
-          >
-            <span style={{ color: TEXT, width: 140, display: 'inline-block' }}>
-              {'  '}{runner.name}
-            </span>
-            <span style={{ color: TEXT_MUTED, width: 100, display: 'inline-block' }}>
-              {runner.platform}
-            </span>
-            <span
-              style={{
-                color: statusColor,
-                opacity: pulseOpacity,
-                textShadow: `0 0 6px ${statusColor}`,
-                fontSize: 12,
-              }}
-            >
-              ●
-            </span>
-            <span style={{ color: statusColor, fontWeight: 700 }}>
-              {runner.status}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 // ---------------------------------------------------------------------------
-// Beat 2 inner component — assembly terminal + code flash overlay + runners
+// Diff lines
 // ---------------------------------------------------------------------------
 
-const ASSEMBLY_TEXT = `$ knot0 deploy --goal knot0.yaml
+const DIFF_LINES = [
+  '--- a/SessionCache.java',
+  '+++ b/SessionCache.java',
+  '@@ -8,7 +8,14 @@',
+  '-  private Map<String, Session> cache = new HashMap<>();',
+  '+  // Fix: Use LRU cache with max size',
+  '+  private static final int MAX_SESSIONS = 1000;',
+  '+  private Map<String, Session> cache = new LinkedHashMap<>(',
+  '+    MAX_SESSIONS, 0.75f, true',
+  '+  ) {',
+  '+    @Override',
+  '+    protected boolean removeEldestEntry(Entry e) {',
+  '+      return size() > MAX_SESSIONS;',
+  '+    }',
+  '+  };',
+];
 
-Assembling actors from goal...
-  api-gateway     handler.ts (47 lines)  \u2713
-  cache-layer     handler.ts (31 lines)  \u2713
-  health-monitor  handler.ts (22 lines)  \u2713
-  load-balancer   handler.ts (18 lines)  \u2713
+// ---------------------------------------------------------------------------
+// Helpers: compute derived state from frame
+// ---------------------------------------------------------------------------
 
-Topology: 4 actors, 6 connections
-Starting...`;
+function computeVisibleFeedItems(frame: number): number {
+  if (frame < BEAT3_START) return 0;
 
-const Beat2: React.FC = () => {
-  const frame = useCurrentFrame();
-  const visible = typewriter(frame, ASSEMBLY_TEXT, 2);
+  // Beat 3: items 0-6 appear sequentially
+  if (frame < BEAT4_START) {
+    // item 0 at 180, item 1 at 195, item 2 at 200, item 3 at 215, 4 at 245, 5 at 260, 6 at 275
+    const triggers = [180, 195, 200, 215, 245, 260, 275];
+    let count = 0;
+    for (const t of triggers) {
+      if (frame >= t) count++;
+    }
+    return count;
+  }
 
-  // CodeFlash overlay: fade in 120-135, hold, fade out 165-180
-  const codeOpacity = interpolate(frame, [120, 135, 165, 180], [0, 1, 1, 0], {
+  // Beat 4: items 7-9
+  if (frame < BEAT5_START) {
+    let count = 7; // all Beat 3 items
+    if (frame >= 300) count = 8; // "Writing fix..."
+    if (frame >= 400) count = 9; // Approval prompt
+    if (frame >= 430) count = 10; // "Deploying to 2 runners..."
+    return count;
+  }
+
+  // Beat 5: hold at 10
+  if (frame < BEAT6_START) return 10;
+
+  // Beat 6: add resolved item
+  if (frame >= BEAT6_START) return 11;
+
+  return 10;
+}
+
+function computeServices(frame: number): ServiceInfo[] {
+  // Base services
+  const apiP99 =
+    frame < BEAT2_START
+      ? 42
+      : frame < BEAT5_START
+        ? interpolate(frame, [BEAT2_START, BEAT2_END], [42, 340], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          })
+        : frame < BEAT5_END
+          ? interpolate(frame, [BEAT5_START, BEAT5_END], [340, 38], {
+              extrapolateLeft: 'clamp',
+              extrapolateRight: 'clamp',
+            })
+          : 38;
+
+  const cacheStatus: 'running' | 'crash' | 'patching' =
+    frame < BEAT2_START + 30
+      ? 'running'
+      : frame < BEAT5_START + 60
+        ? 'crash'
+        : frame < BEAT5_START + 120
+          ? 'patching'
+          : 'running';
+
+  return [
+    {
+      name: 'api-gateway',
+      metric: 'p99',
+      metricValue: `${Math.round(apiP99)}ms`,
+      status: 'running',
+    },
+    {
+      name: 'cache-layer',
+      metric: 'hit',
+      metricValue: cacheStatus === 'running' ? '94%' : cacheStatus === 'crash' ? '0%' : '67%',
+      status: cacheStatus,
+    },
+    {
+      name: 'health-mon',
+      metric: 'checks',
+      metricValue: 'ok',
+      status: 'running',
+    },
+    {
+      name: 'load-balancer',
+      metric: 'queue',
+      metricValue: '0',
+      status: 'running',
+    },
+  ];
+}
+
+function computeSLO(frame: number): { value: number; breached: boolean } {
+  if (frame < BEAT2_START) return { value: 42, breached: false };
+
+  if (frame < BEAT5_START) {
+    const v = interpolate(frame, [BEAT2_START, BEAT2_END], [42, 340], {
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    });
+    return { value: v, breached: v > 100 };
+  }
+
+  if (frame < BEAT5_END) {
+    const v = interpolate(frame, [BEAT5_START, BEAT5_END], [340, 38], {
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    });
+    return { value: v, breached: v > 100 };
+  }
+
+  return { value: 38, breached: false };
+}
+
+function computeRunners(frame: number): RunnerInfo[] {
+  if (frame < BEAT5_START) return [];
+
+  const localFrame = frame - BEAT5_START;
+
+  const prog1 = interpolate(localFrame, [0, 60], [0, 100], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const prog2 = interpolate(localFrame, [10, 70], [0, 100], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // Colorize assembly output
-  const colorized = colorizeAssembly(visible, frame);
+  return [
+    {
+      name: 'prod-k8s-01',
+      platform: 'Kubernetes',
+      status: prog1 >= 100 ? 'done' : 'deploying',
+      progress: prog1,
+    },
+    {
+      name: 'prod-k8s-02',
+      platform: 'Kubernetes',
+      status: prog2 >= 100 ? 'done' : 'deploying',
+      progress: prog2,
+    },
+  ];
+}
 
-  // Smooth blinking cursor using interpolate
-  const cursorOpacity = interpolate(
-    frame % 16,
-    [0, 8, 16],
-    [1, 0, 1],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
+function computeVisibleDiffLines(frame: number): number {
+  if (frame < BEAT4_START + 15) return 0;
+  // ~4 frames per line
+  return interpolate(frame, [BEAT4_START + 15, BEAT4_START + 15 + DIFF_LINES.length * 4], [0, DIFF_LINES.length], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+}
 
-  // Runner section appears after "Starting..." has been typed (~frame 90)
-  const runnerStartFrame = 90;
+function computeEvolutionLines(frame: number): number {
+  if (frame < BEAT6_START + 20) return 0;
+  // 1 line every 12 frames
+  return interpolate(frame, [BEAT6_START + 20, BEAT6_START + 20 + 5 * 12], [0, 5], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+}
 
-  return (
-    <>
-      <AbsoluteFill
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: FONT,
-          padding: 80,
-          // Fade out terminal when code flashes in
-          opacity: interpolate(frame, [120, 135], [1, 0.15], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          }),
-        }}
-      >
-        <Terminal title="terminal" style={{ width: 900 }}>
-          <span style={{ fontSize: 16, lineHeight: 1.7 }}>
-            {colorized}
-            <span style={{ color: AMBER, opacity: cursorOpacity }}>{'\u258C'}</span>
-          </span>
-          <RunnerStatus frame={frame} startFrame={runnerStartFrame} />
-        </Terminal>
-      </AbsoluteFill>
+// Which right panel to show
+type RightPanel = 'services' | 'diff' | 'runners' | 'evolution';
 
-      {codeOpacity > 0 && <CodeFlash opacity={codeOpacity} />}
-    </>
-  );
-};
-
-function colorizeAssembly(visible: string, _frame: number): React.ReactNode[] {
-  const lines = visible.split('\n');
-  const nodes: React.ReactNode[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    if (i > 0) nodes.push('\n');
-    const line = lines[i];
-
-    if (line.startsWith('$')) {
-      // Command line
-      nodes.push(
-        <span key={i} style={{ color: AMBER }}>{line}</span>,
-      );
-    } else if (line.includes('\u2713')) {
-      // Actor line with checkmark
-      const parts = line.split('\u2713');
-      nodes.push(
-        <span key={`${i}-t`} style={{ color: TEXT }}>{parts[0]}</span>,
-      );
-      nodes.push(
-        <span key={`${i}-c`} style={{ color: GREEN }}>{'\u2713'}</span>,
-      );
-      if (parts[1]) {
-        nodes.push(
-          <span key={`${i}-r`} style={{ color: TEXT }}>{parts[1]}</span>,
-        );
-      }
-    } else if (line.startsWith('Assembling') || line.startsWith('Topology') || line.startsWith('Starting')) {
-      nodes.push(
-        <span key={i} style={{ color: TEXT_MUTED }}>{line}</span>,
-      );
-    } else {
-      nodes.push(
-        <span key={i} style={{ color: TEXT }}>{line}</span>,
-      );
-    }
-  }
-
-  return nodes;
+function computeRightPanel(frame: number): RightPanel {
+  if (frame < BEAT4_START) return 'services';
+  if (frame < BEAT5_START) return 'diff';
+  if (frame < BEAT6_START) return 'runners';
+  return 'evolution';
 }
 
 // ---------------------------------------------------------------------------
 // Main composition
 // ---------------------------------------------------------------------------
-// TransitionSeries total = sum(sequences) - sum(transitions)
-// 6 fade transitions of 15 frames = 90 frames overlap
-// Sequences sum to 990 so total = 990 - 90 = 900 frames
 
 export const SelfAssemblyDemo: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps: _fps } = useVideoConfig();
+
+  // Derive all state from frame
+  const visibleFeedItems = computeVisibleFeedItems(frame);
+  const services = computeServices(frame);
+  const slo = computeSLO(frame);
+  const runners = computeRunners(frame);
+  const visibleDiffLines = computeVisibleDiffLines(frame);
+  const evolutionLines = computeEvolutionLines(frame);
+  const rightPanel = computeRightPanel(frame);
+
+  // PagerDuty alert: visible frames 90-160
+  const pagerVisible = frame >= BEAT2_START && frame <= BEAT2_START + 70;
+
+  // Beat 7: brand card
+  const isBeat7 = frame >= BEAT7_START;
+
+  // Dashboard opacity: fade out entering beat 7
+  const dashboardOpacity = interpolate(frame, [BEAT7_START, BEAT7_START + 30], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  // Overall fade-in at start
+  const fadeIn = interpolate(frame, [0, 20], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  // Right panel cross-fade helpers
+  const rightPanelFade = (panel: RightPanel, start: number): number => {
+    if (rightPanel !== panel) return 0;
+    return interpolate(frame, [start, start + 15], [0, 1], {
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    });
+  };
+
   return (
     <AbsoluteFill style={{ backgroundColor: BG, fontFamily: FONT }}>
-      <TransitionSeries>
-        {/* Beat 1: Config reveal */}
-        <TransitionSeries.Sequence durationInFrames={105}>
-          <ConfigReveal />
-        </TransitionSeries.Sequence>
+      {/* Dashboard layer */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: fadeIn * dashboardOpacity,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <BrowserChrome>
+          <StatusBar frame={frame} />
 
-        <TransitionSeries.Transition
-          presentation={fade()}
-          timing={linearTiming({ durationInFrames: 15 })}
-        />
+          {/* Main content area */}
+          <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            {/* Left panel: Agent feed */}
+            <div
+              style={{
+                width: '50%',
+                borderRight: `1px solid ${BORDER}`,
+                overflow: 'hidden',
+              }}
+            >
+              <AgentFeed items={FEED_ITEMS} visibleItems={visibleFeedItems} frame={frame} />
+            </div>
 
-        {/* Beat 2: Assembly terminal + code flash + runners */}
-        <TransitionSeries.Sequence durationInFrames={195}>
-          <Beat2 />
-        </TransitionSeries.Sequence>
+            {/* Right panel: context-dependent */}
+            <div
+              style={{
+                width: '50%',
+                overflow: 'hidden',
+                position: 'relative',
+              }}
+            >
+              {/* Services (Beat 1-3) */}
+              {(rightPanel === 'services') && (
+                <div style={{ opacity: rightPanelFade('services', BEAT1_START) }}>
+                  <ServiceCards services={services} frame={frame} />
+                </div>
+              )}
 
-        <TransitionSeries.Transition
-          presentation={fade()}
-          timing={linearTiming({ durationInFrames: 15 })}
-        />
+              {/* Diff (Beat 4) */}
+              {rightPanel === 'diff' && (
+                <div
+                  style={{
+                    opacity: rightPanelFade('diff', BEAT4_START),
+                    height: '100%',
+                  }}
+                >
+                  <DiffView
+                    filename="fix-memory-leak.patch"
+                    lines={DIFF_LINES}
+                    visibleLines={visibleDiffLines}
+                  />
+                </div>
+              )}
 
-        {/* Beats 3-4: Metrics dashboard green -> red */}
-        <TransitionSeries.Sequence durationInFrames={225}>
-          <MetricsDashboard startBreakAtFrame={120} />
-        </TransitionSeries.Sequence>
+              {/* Runners + recovering services (Beat 5) */}
+              {rightPanel === 'runners' && (
+                <div
+                  style={{
+                    opacity: rightPanelFade('runners', BEAT5_START),
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                  }}
+                >
+                  <RunnerCards runners={runners} frame={frame} />
+                  <div
+                    style={{
+                      borderTop: `1px solid ${BORDER}`,
+                      flex: 1,
+                    }}
+                  >
+                    <ServiceCards services={services} frame={frame} />
+                  </div>
+                </div>
+              )}
 
-        <TransitionSeries.Transition
-          presentation={fade()}
-          timing={linearTiming({ durationInFrames: 15 })}
-        />
+              {/* Evolution log (Beat 6) */}
+              {rightPanel === 'evolution' && (
+                <div style={{ opacity: rightPanelFade('evolution', BEAT6_START) }}>
+                  <EvolutionLog visibleLines={evolutionLines} frame={frame} />
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Beat 5: Evolution diff — the money shot */}
-        <TransitionSeries.Sequence durationInFrames={225}>
-          <EvolutionDiff />
-        </TransitionSeries.Sequence>
+          <SLOBar value={slo.value} threshold={100} breached={slo.breached} />
+        </BrowserChrome>
+      </div>
 
-        <TransitionSeries.Transition
-          presentation={fade()}
-          timing={linearTiming({ durationInFrames: 15 })}
-        />
+      {/* PagerDuty overlay */}
+      <PagerDutyAlert
+        visible={pagerVisible}
+        frame={frame}
+        enterFrame={BEAT2_START}
+        title="payment-svc: p99 latency > 200ms"
+        subtitle="cache-layer: OOMKilled"
+        severity="P1"
+      />
 
-        {/* Beat 6: Evolution log */}
-        <TransitionSeries.Sequence durationInFrames={135}>
-          <EvolutionLog />
-        </TransitionSeries.Sequence>
+      {/* Brand card overlay (Beat 7) */}
+      {isBeat7 && <BrandCard frame={frame} localFrame={frame - BEAT7_START} />}
 
-        <TransitionSeries.Transition
-          presentation={fade()}
-          timing={linearTiming({ durationInFrames: 15 })}
-        />
-
-        {/* Beat 7: Branding end card */}
-        <TransitionSeries.Sequence durationInFrames={105}>
-          <Branding />
-        </TransitionSeries.Sequence>
-      </TransitionSeries>
-
-      {/* Subtle scan lines overlay — outside TransitionSeries, layered on top */}
+      {/* Subtle scan lines overlay */}
       <AbsoluteFill
         style={{
           background:

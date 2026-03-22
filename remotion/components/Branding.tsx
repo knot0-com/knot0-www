@@ -1,5 +1,5 @@
 // Input: Remotion useCurrentFrame/interpolate/spring/useVideoConfig, theme colors, trefoil SVG path
-// Output: Beat 7 / standalone — logo reveal + tagline end card with spring entrances
+// Output: Beat 7 / standalone -- logo reveal + tagline end card with spring entrances
 // Position: Final beat in SelfAssemblyDemo; also standalone LogoReveal composition
 
 import React from 'react';
@@ -36,7 +36,10 @@ export const Branding: React.FC = () => {
     config: { damping: 200 },
   });
 
-  const taglineTranslateY = interpolate(taglineSpring, [0, 1], [12, 0]);
+  const taglineTranslateY = interpolate(taglineSpring, [0, 1], [12, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   // URL springs in at frame 50
   const urlSpring = spring({
@@ -45,7 +48,10 @@ export const Branding: React.FC = () => {
     config: { damping: 200 },
   });
 
-  const urlTranslateY = interpolate(urlSpring, [0, 1], [8, 0]);
+  const urlTranslateY = interpolate(urlSpring, [0, 1], [8, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   // Logo container springs in
   const logoSpring = spring({
@@ -54,7 +60,10 @@ export const Branding: React.FC = () => {
     config: { damping: 200 },
   });
 
-  const logoScale = interpolate(logoSpring, [0, 1], [0.8, 1]);
+  const logoScale = interpolate(logoSpring, [0, 1], [0.8, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <AbsoluteFill
