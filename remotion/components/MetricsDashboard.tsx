@@ -1,9 +1,9 @@
-// Input: Remotion useCurrentFrame/interpolate, theme colors, Terminal component
-// Output: Beats 3-4 — metrics table transitioning from green/healthy to red/breach
+// Input: Remotion useCurrentFrame/interpolate/spring/useVideoConfig, theme colors, Terminal component
+// Output: Beats 3-4 — metrics table transitioning from green/healthy to red/breach with spring entrance
 // Position: Third+fourth beat in SelfAssemblyDemo composition
 
 import React from 'react';
-import { useCurrentFrame, interpolate, AbsoluteFill } from 'remotion';
+import { useCurrentFrame, interpolate, spring, useVideoConfig, AbsoluteFill } from 'remotion';
 import { Terminal } from './Terminal';
 import { FONT, TEXT, TEXT_DIM, TEXT_MUTED, GREEN, RED, AMBER, typewriter } from '../theme';
 
@@ -15,7 +15,18 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
   startBreakAtFrame,
 }) => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const isBreaching = frame >= startBreakAtFrame;
+
+  // Spring entrance
+  const entrance = spring({
+    frame,
+    fps,
+    config: { damping: 200 },
+  });
+
+  const scale = interpolate(entrance, [0, 1], [0.95, 1]);
+  const entranceOpacity = entrance;
 
   // Interpolated values for breach transition
   const p99 = interpolate(frame, [startBreakAtFrame, startBreakAtFrame + 30], [42, 340], {
@@ -34,15 +45,23 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
   });
 
   // Trigger evolution text after breach stabilizes
-  const triggerText = '→ triggering evolution cycle';
+  const triggerText = '\u2192 triggering evolution cycle';
   const triggerStart = startBreakAtFrame + 40;
   const visibleTrigger = frame >= triggerStart ? typewriter(frame - triggerStart, triggerText, 2) : '';
 
+  // Smooth blinking cursor
+  const cursorOpacity = interpolate(
+    frame % 16,
+    [0, 8, 16],
+    [1, 0, 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
+  );
+
   const check = (
-    <span style={{ color: GREEN }}>{'✓'}</span>
+    <span style={{ color: GREEN }}>{'\u2713'}</span>
   );
   const cross = (
-    <span style={{ color: RED }}>{'✗'}</span>
+    <span style={{ color: RED }}>{'\u2717'}</span>
   );
 
   if (!isBreaching) {
@@ -55,6 +74,8 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
           justifyContent: 'center',
           fontFamily: FONT,
           padding: 60,
+          opacity: entranceOpacity,
+          transform: `scale(${scale})`,
         }}
       >
         <Terminal title="knot0 dashboard" style={{ width: 1000 }}>
@@ -69,7 +90,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
               {'cache-layer      '}{check}{' ok     3ms     1.1k     evictions: 3/min'}
             </div>
             <div style={{ color: TEXT }}>
-              {'health-monitor   '}{check}{' ok     —       2/s      all checks passing'}
+              {'health-monitor   '}{check}{' ok     \u2014       2/s      all checks passing'}
             </div>
             <div style={{ color: TEXT }}>
               {'load-balancer    '}{check}{' ok     1ms     1.2k     backends: 4'}
@@ -98,6 +119,8 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         justifyContent: 'center',
         fontFamily: FONT,
         padding: 60,
+        opacity: entranceOpacity,
+        transform: `scale(${scale})`,
       }}
     >
       <Terminal title="knot0 dashboard" style={{ width: 1000 }}>
@@ -109,15 +132,15 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
           {/* Cache degrades first */}
           <div style={{ color: interpolate(breachOpacity, [0, 1], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) > 0.3 ? RED : TEXT }}>
             {'cache-layer      '}
-            <span style={{ color: AMBER }}>{'⚠'}</span>
-            {' degraded   hit: 94% → '}
+            <span style={{ color: AMBER }}>{'\u26A0'}</span>
+            {' degraded   hit: 94% \u2192 '}
             <span style={{ color: RED }}>{hitDisplay}%</span>
             {'   pool exhausted'}
           </div>
 
           {/* API gateway breaches */}
           <div style={{ color: TEXT, opacity: breachOpacity }}>
-            {'api-gateway      '}{cross}{' breach     p99: 42ms → '}
+            {'api-gateway      '}{cross}{' breach     p99: 42ms \u2192 '}
             <span style={{ color: RED }}>{p99Display}ms</span>
           </div>
 
@@ -140,7 +163,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
           {visibleTrigger && (
             <div style={{ color: AMBER }}>
               {'                 '}{visibleTrigger}
-              <span style={{ opacity: frame % 20 < 10 ? 1 : 0, color: AMBER }}>_</span>
+              <span style={{ opacity: cursorOpacity, color: AMBER }}>{'\u258C'}</span>
             </div>
           )}
         </div>

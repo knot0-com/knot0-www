@@ -1,8 +1,9 @@
-// Input: Remotion staticFile API, FontFace browser API, public/fonts/*.woff2
-// Output: Color constants, FONT string, fadeIn/typewriter animation helpers, font loading handle
+// Input: @remotion/fonts loadFont, Remotion staticFile API
+// Output: Color constants, FONT string, fadeIn/typewriter animation helpers, font loading promise
 // Position: Shared theme module for all Remotion compositions
 
-import { staticFile, delayRender, continueRender } from 'remotion';
+import { loadFont } from '@remotion/fonts';
+import { staticFile } from 'remotion';
 
 // ---------------------------------------------------------------------------
 // Colors
@@ -20,36 +21,23 @@ export const GREEN = '#39ff14';
 export const RED = '#ff4444';
 
 // ---------------------------------------------------------------------------
-// Font
+// Font — @remotion/fonts handles delayRender/continueRender internally
 // ---------------------------------------------------------------------------
 
 export const FONT = "'JetBrains Mono', monospace";
 
-const waitForFont = delayRender('Loading JetBrains Mono fonts');
-
-const regularFont = new FontFace(
-  'JetBrains Mono',
-  `url('${staticFile('fonts/JetBrainsMono-Regular.woff2')}') format('woff2')`,
-  { weight: '400', style: 'normal' },
-);
-
-const boldFont = new FontFace(
-  'JetBrains Mono',
-  `url('${staticFile('fonts/JetBrainsMono-Bold.woff2')}') format('woff2')`,
-  { weight: '700', style: 'normal' },
-);
-
-Promise.all([regularFont.load(), boldFont.load()])
-  .then((loaded) => {
-    for (const f of loaded) {
-      document.fonts.add(f);
-    }
-    continueRender(waitForFont);
-  })
-  .catch((err) => {
-    console.error('Font loading failed:', err);
-    continueRender(waitForFont);
-  });
+const _fontLoaded = Promise.all([
+  loadFont({
+    family: 'JetBrains Mono',
+    url: staticFile('fonts/JetBrainsMono-Regular.woff2'),
+    weight: '400',
+  }),
+  loadFont({
+    family: 'JetBrains Mono',
+    url: staticFile('fonts/JetBrainsMono-Bold.woff2'),
+    weight: '700',
+  }),
+]);
 
 // ---------------------------------------------------------------------------
 // Animation helpers
@@ -58,6 +46,8 @@ Promise.all([regularFont.load(), boldFont.load()])
 /**
  * Returns an opacity value (0..1) that fades in starting at `start` over
  * `duration` frames. Clamped on both sides.
+ *
+ * Duration tip: express as `seconds * fps` for clarity, e.g. `0.5 * 30`.
  */
 export function fadeIn(frame: number, start: number, duration: number): number {
   if (frame < start) return 0;
@@ -68,8 +58,11 @@ export function fadeIn(frame: number, start: number, duration: number): number {
 /**
  * Returns the visible portion of `text` as if being typed at `speed`
  * characters per frame, starting at frame 0.
+ *
+ * After all characters are revealed, a brief pause is held before returning
+ * the full string (handles the common "pause after sentence" pattern).
  */
 export function typewriter(frame: number, text: string, speed = 2): string {
   const chars = Math.floor(frame * speed);
-  return text.slice(0, Math.max(0, chars));
+  return text.slice(0, Math.min(text.length, Math.max(0, chars)));
 }

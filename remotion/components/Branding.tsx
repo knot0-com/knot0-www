@@ -1,10 +1,10 @@
-// Input: Remotion useCurrentFrame/interpolate, theme colors, trefoil SVG path
-// Output: Beat 7 / standalone — logo reveal + tagline end card
+// Input: Remotion useCurrentFrame/interpolate/spring/useVideoConfig, theme colors, trefoil SVG path
+// Output: Beat 7 / standalone — logo reveal + tagline end card with spring entrances
 // Position: Final beat in SelfAssemblyDemo; also standalone LogoReveal composition
 
 import React from 'react';
-import { useCurrentFrame, interpolate, AbsoluteFill } from 'remotion';
-import { BG, FONT, TEXT, AMBER, CYAN, fadeIn } from '../theme';
+import { useCurrentFrame, interpolate, spring, useVideoConfig, AbsoluteFill } from 'remotion';
+import { BG, FONT, TEXT, AMBER, CYAN } from '../theme';
 
 const TREFOIL_PATH =
   'M 50 15 Q 75 15 75 40 Q 75 55 50 55 Q 25 55 25 70 Q 25 85 50 85 Q 75 85 75 70 Q 75 55 50 55 Q 25 55 25 40 Q 25 15 50 15';
@@ -14,6 +14,7 @@ const PATH_LENGTH = 320;
 
 export const Branding: React.FC = () => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
 
   // Trefoil stroke draws over frames 0-30
   const drawProgress = interpolate(frame, [0, 30], [0, 1], {
@@ -21,14 +22,39 @@ export const Branding: React.FC = () => {
     extrapolateRight: 'clamp',
   });
 
-  // Center dot fades in frames 15-30
-  const dotOpacity = fadeIn(frame, 15, 15);
+  // Center dot springs in at frame 15
+  const dotSpring = spring({
+    frame: Math.max(0, frame - 15),
+    fps,
+    config: { damping: 200 },
+  });
 
-  // Tagline fades in frames 30-50
-  const taglineOpacity = fadeIn(frame, 30, 20);
+  // Tagline springs in at frame 30
+  const taglineSpring = spring({
+    frame: Math.max(0, frame - 30),
+    fps,
+    config: { damping: 200 },
+  });
 
-  // URL fades in frames 50-65
-  const urlOpacity = fadeIn(frame, 50, 15);
+  const taglineTranslateY = interpolate(taglineSpring, [0, 1], [12, 0]);
+
+  // URL springs in at frame 50
+  const urlSpring = spring({
+    frame: Math.max(0, frame - 50),
+    fps,
+    config: { damping: 200 },
+  });
+
+  const urlTranslateY = interpolate(urlSpring, [0, 1], [8, 0]);
+
+  // Logo container springs in
+  const logoSpring = spring({
+    frame,
+    fps,
+    config: { damping: 200 },
+  });
+
+  const logoScale = interpolate(logoSpring, [0, 1], [0.8, 1]);
 
   return (
     <AbsoluteFill
@@ -44,7 +70,13 @@ export const Branding: React.FC = () => {
       {/* Trefoil logo */}
       <svg
         viewBox="0 0 100 100"
-        style={{ width: 120, height: 120, marginBottom: 32 }}
+        style={{
+          width: 120,
+          height: 120,
+          marginBottom: 32,
+          opacity: logoSpring,
+          transform: `scale(${logoScale})`,
+        }}
       >
         <path
           d={TREFOIL_PATH}
@@ -61,7 +93,7 @@ export const Branding: React.FC = () => {
           cy={50}
           r={3}
           fill={CYAN}
-          opacity={dotOpacity}
+          opacity={dotSpring}
         />
       </svg>
 
@@ -70,7 +102,8 @@ export const Branding: React.FC = () => {
         style={{
           fontSize: 36,
           color: TEXT,
-          opacity: taglineOpacity,
+          opacity: taglineSpring,
+          transform: `translateY(${taglineTranslateY}px)`,
           marginBottom: 12,
         }}
       >
@@ -82,7 +115,8 @@ export const Branding: React.FC = () => {
         style={{
           fontSize: 24,
           color: AMBER,
-          opacity: urlOpacity,
+          opacity: urlSpring,
+          transform: `translateY(${urlTranslateY}px)`,
         }}
       >
         knot0.com

@@ -1,15 +1,15 @@
-// Input: Remotion useCurrentFrame/interpolate, theme colors, Terminal component
-// Output: Beat 5 — split-view diff + validation panels
+// Input: Remotion useCurrentFrame/interpolate/spring/useVideoConfig, theme colors, Terminal component
+// Output: Beat 5 — split-view diff + validation panels with spring entrances from left/right
 // Position: Fifth beat (the money shot) in SelfAssemblyDemo composition
 
 import React from 'react';
-import { useCurrentFrame, AbsoluteFill, interpolate } from 'remotion';
+import { useCurrentFrame, AbsoluteFill, interpolate, spring, useVideoConfig } from 'remotion';
 import { Terminal } from './Terminal';
 import { FONT, TEXT, TEXT_DIM, TEXT_MUTED, GREEN, RED, AMBER, fadeIn } from '../theme';
 
 // Diff lines (left panel)
 const DIFF_LINES: Array<{ text: string; color: string }> = [
-  { text: '// cache-layer/handler.ts  v1 → v2', color: TEXT_DIM },
+  { text: '// cache-layer/handler.ts  v1 \u2192 v2', color: TEXT_DIM },
   { text: '', color: TEXT },
   { text: '- const pool = createPool({ max: 10 });', color: RED },
   { text: '+ const pool = createPool({', color: GREEN },
@@ -25,12 +25,12 @@ const DIFF_LINES: Array<{ text: string; color: string }> = [
 
 // Validation lines (right panel)
 const VALIDATION_LINES: Array<{ label: string; value: string; valueColor: string }> = [
-  { label: 'evolution:', value: ' cache-layer v1 → v2', valueColor: TEXT },
+  { label: 'evolution:', value: ' cache-layer v1 \u2192 v2', valueColor: TEXT },
   { label: '', value: '', valueColor: TEXT },
   { label: 'change:', value: '    pool scaling + circuit breaker', valueColor: TEXT },
   { label: '', value: '', valueColor: TEXT },
   { label: 'testing:', value: '   shadow traffic... passed', valueColor: TEXT },
-  { label: '', value: '           p99: 340ms → 38ms', valueColor: TEXT },
+  { label: '', value: '           p99: 340ms \u2192 38ms', valueColor: TEXT },
   { label: '', value: '', valueColor: TEXT },
   { label: 'SLO:', value: '       38ms < 100ms  ', valueColor: TEXT },
   { label: '', value: '', valueColor: TEXT },
@@ -44,6 +44,23 @@ const FRAMES_PER_VAL_LINE = 6;
 
 export const EvolutionDiff: React.FC = () => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // Spring entrances — left panel slides from left, right panel slides from right
+  const leftEntrance = spring({
+    frame,
+    fps,
+    config: { damping: 200 },
+  });
+
+  const rightEntrance = spring({
+    frame: Math.max(0, frame - 5), // slight delay for right panel
+    fps,
+    config: { damping: 200 },
+  });
+
+  const leftTranslateX = interpolate(leftEntrance, [0, 1], [-40, 0]);
+  const rightTranslateX = interpolate(rightEntrance, [0, 1], [40, 0]);
 
   // Calculate visible diff lines
   const visibleDiffLines = Math.min(
@@ -56,6 +73,14 @@ export const EvolutionDiff: React.FC = () => {
   const visibleValLines = valFrame > 0
     ? Math.min(VALIDATION_LINES.length, Math.floor(valFrame / FRAMES_PER_VAL_LINE))
     : 0;
+
+  // Smooth blinking cursor
+  const cursorOpacity = interpolate(
+    frame % 16,
+    [0, 8, 16],
+    [1, 0, 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
+  );
 
   return (
     <AbsoluteFill
@@ -70,7 +95,12 @@ export const EvolutionDiff: React.FC = () => {
       }}
     >
       {/* Left panel: diff */}
-      <div style={{ flex: 1, maxWidth: 860 }}>
+      <div style={{
+        flex: 1,
+        maxWidth: 860,
+        opacity: leftEntrance,
+        transform: `translateX(${leftTranslateX}px)`,
+      }}>
         <Terminal title="diff" style={{ height: 460 }}>
           <div style={{ fontSize: 14, lineHeight: 1.8 }}>
             {DIFF_LINES.slice(0, visibleDiffLines).map((line, i) => (
@@ -90,14 +120,19 @@ export const EvolutionDiff: React.FC = () => {
               </div>
             ))}
             {visibleDiffLines < DIFF_LINES.length && (
-              <span style={{ color: AMBER, opacity: frame % 20 < 10 ? 1 : 0 }}>_</span>
+              <span style={{ color: AMBER, opacity: cursorOpacity }}>{'\u258C'}</span>
             )}
           </div>
         </Terminal>
       </div>
 
       {/* Right panel: validation */}
-      <div style={{ flex: 1, maxWidth: 860 }}>
+      <div style={{
+        flex: 1,
+        maxWidth: 860,
+        opacity: rightEntrance,
+        transform: `translateX(${rightTranslateX}px)`,
+      }}>
         <Terminal title="validation" style={{ height: 460 }}>
           <div style={{ fontSize: 14, lineHeight: 1.8 }}>
             {VALIDATION_LINES.slice(0, visibleValLines).map((line, i) => {
@@ -114,13 +149,13 @@ export const EvolutionDiff: React.FC = () => {
                     <span style={{ color: TEXT_MUTED }}>{line.label}</span>
                   )}
                   <span style={{ color: line.valueColor }}>{line.value}</span>
-                  {isSloLine && <span style={{ color: GREEN }}>{'✓'}</span>}
+                  {isSloLine && <span style={{ color: GREEN }}>{'\u2713'}</span>}
                   {isPromoted && null}
                 </div>
               );
             })}
             {visibleValLines > 0 && visibleValLines < VALIDATION_LINES.length && (
-              <span style={{ color: AMBER, opacity: frame % 20 < 10 ? 1 : 0 }}>_</span>
+              <span style={{ color: AMBER, opacity: cursorOpacity }}>{'\u258C'}</span>
             )}
           </div>
         </Terminal>

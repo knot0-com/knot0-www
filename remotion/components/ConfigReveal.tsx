@@ -1,9 +1,9 @@
-// Input: Remotion useCurrentFrame, theme helpers, Terminal component
-// Output: Beat 1 — YAML config typewriter reveal (frames 0-89)
+// Input: Remotion useCurrentFrame/spring/useVideoConfig/interpolate, theme helpers, Terminal component
+// Output: Beat 1 — YAML config typewriter reveal with spring entrance (frames 0-104)
 // Position: First beat in SelfAssemblyDemo composition
 
 import React from 'react';
-import { useCurrentFrame, AbsoluteFill } from 'remotion';
+import { useCurrentFrame, useVideoConfig, spring, interpolate, AbsoluteFill } from 'remotion';
 import { Terminal } from './Terminal';
 import { FONT, TEXT, TEXT_MUTED, CYAN, AMBER, typewriter } from '../theme';
 
@@ -108,7 +108,26 @@ function colorize(visible: string): React.ReactNode[] {
 
 export const ConfigReveal: React.FC = () => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const visible = typewriter(frame, FULL_TEXT, 2);
+
+  // Spring entrance — terminal springs in from slight scale-down
+  const entrance = spring({
+    frame,
+    fps,
+    config: { damping: 200 },
+  });
+
+  const scale = interpolate(entrance, [0, 1], [0.92, 1]);
+  const opacity = entrance;
+
+  // Smooth blinking cursor
+  const cursorOpacity = interpolate(
+    frame % 16,
+    [0, 8, 16],
+    [1, 0, 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
+  );
 
   return (
     <AbsoluteFill
@@ -118,6 +137,8 @@ export const ConfigReveal: React.FC = () => {
         justifyContent: 'center',
         fontFamily: FONT,
         padding: 80,
+        opacity,
+        transform: `scale(${scale})`,
       }}
     >
       <Terminal title="knot0.yaml" style={{ width: 800 }}>
@@ -125,11 +146,11 @@ export const ConfigReveal: React.FC = () => {
         {/* Blinking cursor */}
         <span
           style={{
-            opacity: frame % 20 < 10 ? 1 : 0,
+            opacity: cursorOpacity,
             color: AMBER,
           }}
         >
-          _
+          {'\u258C'}
         </span>
       </Terminal>
     </AbsoluteFill>
