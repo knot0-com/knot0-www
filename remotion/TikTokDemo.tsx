@@ -12,7 +12,6 @@ import {
 } from 'remotion';
 import {
   BG,
-  BG_LIGHT,
   FONT,
   AMBER,
   CYAN,
@@ -54,7 +53,10 @@ const XFADE = 5;
 // Inline helper components
 // ---------------------------------------------------------------------------
 
-/** Phone lock screen with time, date, and optional notification. */
+/** SF-style font stack for iPhone time display. */
+const SF_FONT = "'SF Pro Display', 'Helvetica Neue', sans-serif";
+
+/** Phone lock screen with iPhone frame, dynamic island, iOS notifications. */
 const PhoneLockScreen: React.FC<{
   frame: number;
   fps: number;
@@ -85,7 +87,7 @@ const PhoneLockScreen: React.FC<{
   const vibrationActive =
     notification === 'alert' && frame >= 20 && frame <= 50;
   const vibrationX = vibrationActive
-    ? Math.sin(frame * 2.5) * 2
+    ? Math.sin(frame * 2.5) * 3
     : 0;
 
   // Screen fade-off effect (Beat 4: engineer never woke up)
@@ -96,11 +98,16 @@ const PhoneLockScreen: React.FC<{
       })
     : 1;
 
+  const screenOffScale = fadeOut
+    ? interpolate(frame, [BEAT4_START + 90, BEAT4_START + 110], [1, 0.98], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      })
+    : 1;
+
   const isAlert = notification === 'alert';
   const isResolved = notification === 'resolved';
-  const borderColor = isAlert ? RED : isResolved ? GREEN : 'transparent';
-  const dotColor = isAlert ? RED : isResolved ? GREEN : 'transparent';
-  const appName = 'PagerDuty';
+  const appIconBg = isAlert ? RED : isResolved ? GREEN : '#666';
   const notifTitle = isAlert
     ? 'payment-svc: p99 latency > 200ms'
     : 'payment-svc: Resolved automatically';
@@ -108,103 +115,330 @@ const PhoneLockScreen: React.FC<{
     ? 'Severity: P1 \u00B7 Triggered 3s ago'
     : 'MTTR: 47 seconds';
 
+  // Phone frame dimensions
+  const PHONE_W = 380;
+  const PHONE_H = 820;
+
   return (
     <AbsoluteFill
       style={{
-        background: 'linear-gradient(180deg, #0a0a0a 0%, #111111 100%)',
-        fontFamily: FONT,
-        transform: `translateX(${vibrationX}px)`,
-        opacity: screenOffOpacity,
+        backgroundColor: BG,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
-      {/* Time */}
+      {/* Phone frame — vibration applies here, not to background */}
       <div
         style={{
-          position: 'absolute',
-          top: '35%',
-          width: '100%',
-          textAlign: 'center',
+          width: PHONE_W,
+          height: PHONE_H,
+          borderRadius: 48,
+          border: '3px solid #333',
+          backgroundColor: '#1a1a1a',
+          position: 'relative',
+          overflow: 'hidden',
+          transform: `translateX(${vibrationX}px) scale(${screenOffScale})`,
+          opacity: screenOffOpacity,
+          boxShadow: '0 0 60px rgba(0,0,0,0.8)',
         }}
       >
-        <div
-          style={{
-            fontSize: 72,
-            fontWeight: 200,
-            color: '#ffffff',
-            letterSpacing: 2,
-          }}
-        >
-          {time}
-        </div>
-        <div
-          style={{
-            fontSize: 18,
-            color: TEXT_DIM,
-            marginTop: 8,
-          }}
-        >
-          Saturday, March 22
-        </div>
-      </div>
-
-      {/* Notification */}
-      {notification && (
+        {/* Dynamic Island */}
         <div
           style={{
             position: 'absolute',
-            top: 80,
-            left: 24,
-            right: 24,
-            transform: `translateY(${notifY}px)`,
-            opacity: notifSpring,
-            background: `${BG_LIGHT}e6`,
-            borderRadius: 16,
-            borderLeft: `4px solid ${borderColor}`,
-            padding: '16px 20px',
+            top: 12,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 120,
+            height: 34,
+            borderRadius: 17,
+            backgroundColor: '#000',
+            zIndex: 20,
+          }}
+        />
+
+        {/* Screen content area */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 45,
+            overflow: 'hidden',
+            background: 'linear-gradient(180deg, #0c0c1a 0%, #0a0a0a 100%)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 6,
           }}
         >
-          {/* Header row */}
+          {/* Status bar */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              padding: '14px 28px 0 28px',
+              height: 20,
+              fontFamily: SF_FONT,
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#fff',
+              zIndex: 10,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Left: carrier */}
+            <span style={{ width: 80 }}>T-Mobile</span>
+
+            {/* Center: status bar time (small) */}
+            <span style={{ fontSize: 14, fontWeight: 600 }}>
+              {time.replace(' AM', '').replace(' PM', '')}
+            </span>
+
+            {/* Right: wifi + battery */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                justifyContent: 'flex-end',
+                width: 80,
+              }}
+            >
+              {/* Wifi bars — 3 ascending rectangles */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1.5 }}>
+                <div style={{ width: 3, height: 5, borderRadius: 1, backgroundColor: '#fff' }} />
+                <div style={{ width: 3, height: 8, borderRadius: 1, backgroundColor: '#fff' }} />
+                <div style={{ width: 3, height: 11, borderRadius: 1, backgroundColor: '#fff' }} />
+              </div>
+              {/* Battery icon */}
               <div
                 style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  backgroundColor: dotColor,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: TEXT,
+                  width: 24,
+                  height: 11,
+                  borderRadius: 3,
+                  border: '1.5px solid #fff',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 1.5,
                 }}
               >
-                {appName}
-              </span>
+                {/* Battery fill */}
+                <div
+                  style={{
+                    width: '70%',
+                    height: '100%',
+                    borderRadius: 1.5,
+                    backgroundColor: '#fff',
+                  }}
+                />
+                {/* Battery nub */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: -4,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 2,
+                    height: 5,
+                    borderRadius: '0 1px 1px 0',
+                    backgroundColor: '#fff',
+                    opacity: 0.5,
+                  }}
+                />
+              </div>
             </div>
-            <span style={{ fontSize: 13, color: TEXT_MUTED }}>now</span>
           </div>
 
-          {/* Body */}
-          <div style={{ fontSize: 14, color: TEXT_DIM, lineHeight: 1.5 }}>
-            {notifTitle}
+          {/* Big time display */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '30%',
+              width: '100%',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 76,
+                fontWeight: 300,
+                color: '#ffffff',
+                letterSpacing: 2,
+                fontFamily: SF_FONT,
+                lineHeight: 1,
+              }}
+            >
+              {time.replace(' AM', '').replace(' PM', '')}
+            </div>
+            <div
+              style={{
+                fontSize: 18,
+                color: TEXT_DIM,
+                marginTop: 10,
+                fontFamily: SF_FONT,
+                fontWeight: 400,
+              }}
+            >
+              Saturday, March 22
+            </div>
           </div>
-          <div style={{ fontSize: 13, color: TEXT_MUTED }}>
-            {notifSub}
+
+          {/* Notification */}
+          {notification && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '56%',
+                left: 16,
+                right: 16,
+                transform: `translateY(${notifY}px)`,
+                opacity: notifSpring,
+                background: 'rgba(30, 30, 30, 0.85)',
+                borderRadius: 16,
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
+              {/* App icon row + time */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* App icon */}
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      backgroundColor: appIconBg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: '#fff',
+                      fontFamily: SF_FONT,
+                    }}
+                  >
+                    PD
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: TEXT_MUTED,
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase' as const,
+                        fontFamily: SF_FONT,
+                      }}
+                    >
+                      PAGERDUTY
+                    </span>
+                  </div>
+                </div>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: TEXT_MUTED,
+                    fontFamily: SF_FONT,
+                  }}
+                >
+                  now
+                </span>
+              </div>
+
+              {/* Title */}
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: '#fff',
+                  fontFamily: SF_FONT,
+                  marginTop: 2,
+                  lineHeight: 1.3,
+                }}
+              >
+                {notifTitle}
+              </div>
+
+              {/* Body */}
+              <div
+                style={{
+                  fontSize: 14,
+                  color: TEXT_DIM,
+                  fontFamily: SF_FONT,
+                  lineHeight: 1.4,
+                }}
+              >
+                {notifSub}
+              </div>
+            </div>
+          )}
+
+          {/* Bottom icons — flashlight and camera */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 40,
+              left: 0,
+              right: 0,
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0 36px',
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+              }}
+            >
+              {'\uD83D\uDD26'}
+            </div>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+              }}
+            >
+              {'\uD83D\uDCF7'}
+            </div>
           </div>
+
+          {/* Home indicator bar */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '40%',
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.3)',
+            }}
+          />
         </div>
-      )}
+      </div>
     </AbsoluteFill>
   );
 };
